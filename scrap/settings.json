@@ -1,0 +1,5 @@
+{
+  "Scraper": {
+    "BaseUrl": "https://webappcenter.nbs.rs/ExchangeRateWebApp/ExchangeRate/"
+  }
+}
