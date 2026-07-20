@@ -9,30 +9,28 @@ namespace gemini.Services
 {
     public class MADScraperService : IScraperService
     {
-        private readonly HttpClient _httpClient;
         private readonly IParserService _parser;
 
+        private readonly string baseUrl = "https://www.bkam.ma/en/Markets/Key-indicators/Foreign-exchange-market/Foreign-exchange-rates/Foreign-banknotes-exchange-rate";
 
         public MADScraperService(
-            HttpClient httpClient,
-            IParserService parser)
+            IParserService parser
+        )
         {
-            _httpClient = httpClient;
             _parser = parser;
         }
 
         public async Task RunAsync()
         {
-            var chromeOptions = new ChromeOptions();
-            chromeOptions.AddArguments("--headless=new");
+            // var chromeOptions = new ChromeOptions();
+            // chromeOptions.AddArguments("--headless=new");
 
-            var driver = UndetectedChromeDriver.Create(
-                options: chromeOptions,
-                driverExecutablePath: await new ChromeDriverInstaller().Auto()
-            );
+            // var driver = UndetectedChromeDriver.Create(
+            //     options: chromeOptions,
+            //     driverExecutablePath: await new ChromeDriverInstaller().Auto()
+            // );
+            var driver = await CreateDriver();
 
-
-            string baseUrl = "https://www.bkam.ma/en/Markets/Key-indicators/Foreign-exchange-market/Foreign-exchange-rates/Foreign-banknotes-exchange-rate";
             var start = new DateOnly(2020, 1, 3);
             var end = new DateOnly(2020, 2, 1);
             // var end = new DateOnly(2026, 12, 31);
@@ -52,7 +50,7 @@ namespace gemini.Services
                 await driver.Navigate().GoToUrlAsync(url);
                 var htmlContent = driver.ExecuteScript("return document.documentElement.outerHTML;") as string;
                 // Console.WriteLine(htmlContent);
-                File.WriteAllText($"debug-{date}.html", htmlContent);
+                // File.WriteAllText($"debug-{date}.html", htmlContent);
                 Console.WriteLine("Title: " + driver.Title);
                 Console.WriteLine("URL: " + driver.Url);
                 // await Task.Delay(10000);
@@ -86,7 +84,7 @@ namespace gemini.Services
 
 
                 if (
-                    currency == CurrencyNames.Euro &&
+                    currency == "1 EURO" &&
                     purchaseValue != null &&
                     sellValue != null
                 )
@@ -124,6 +122,16 @@ namespace gemini.Services
             // // IReadOnlyCollection<IWebElement> rows = driver.FindElements(By.CssSelector("tr"));
         }
 
+        private async Task<UndetectedChromeDriver> CreateDriver()
+        {
+            var chromeOptions = new ChromeOptions();
+            chromeOptions.AddArguments("--headless=new");
 
+            return UndetectedChromeDriver.Create(
+                options: chromeOptions,
+                driverExecutablePath: await new ChromeDriverInstaller().Auto()
+            );
+
+        }
     }
 }
