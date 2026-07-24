@@ -28,7 +28,7 @@ namespace gemini.Data
                 .HasIndex(e => new
                 {
                     e.CurrencyId,
-                    e.Date
+                    e.Date,
                 })
                 .IsUnique();
 
@@ -36,14 +36,14 @@ namespace gemini.Data
                 new Currency
                 {
                     Id = 1,
-                    Code = "XOF",
-                    Name = "West African CFA franc"
+                    Code = CurrencyNames.XOF,
+                    Name = CurrencyNames.XOFFullName
                 },
                 new Currency
                 {
                     Id = 2,
-                    Code = "MAD",
-                    Name = "Moroccan Dirham"
+                    Code = CurrencyNames.MAD,
+                    Name = CurrencyNames.MADFullName
                 }
             );
 

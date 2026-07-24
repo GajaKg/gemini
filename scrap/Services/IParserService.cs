@@ -5,6 +5,7 @@ namespace gemini.Services
 {
     public interface IParserService
     {
-        Task<ExchangeRate?> Parse(HtmlDocument doc, DateOnly date);
+        ExchangeRate? Parse(HtmlDocument doc, DateOnly date, int currencyId);
+        // ExchangeRate? Parse(HtmlDocument doc);
     }
 }
