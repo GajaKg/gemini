@@ -1,125 +1,122 @@
 using System.Globalization;
 using gemini.Interfaces;
+using gemini.Models;
+using gemini.Repositories;
+using HtmlAgilityPack;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using SeleniumUndetectedChromeDriver;
 
-namespace gemini.Services
+namespace gemini.Services.MAD
 {
     public class MADScraperService : IScraperService
     {
-        private readonly IParserService _parser;
+        private readonly ICurrencyRepository _currencyRepository;
+        private readonly IExchangeRateRepository _exchangeRateRepository;
+        private readonly MADParserService _parser;
 
+        private readonly byte bulkSaveNumber = 5; // how many items to save at once
         private readonly string baseUrl = "https://www.bkam.ma/en/Markets/Key-indicators/Foreign-exchange-market/Foreign-exchange-rates/Foreign-banknotes-exchange-rate";
 
         public MADScraperService(
-            IParserService parser
+            ICurrencyRepository currencyRepository,
+            IExchangeRateRepository exchangeRateRepository,
+            MADParserService parser
         )
         {
+            _currencyRepository = currencyRepository;
+            _exchangeRateRepository = exchangeRateRepository;
             _parser = parser;
         }
 
         public async Task RunAsync()
         {
-            // var chromeOptions = new ChromeOptions();
-            // chromeOptions.AddArguments("--headless=new");
 
-            // var driver = UndetectedChromeDriver.Create(
-            //     options: chromeOptions,
-            //     driverExecutablePath: await new ChromeDriverInstaller().Auto()
-            // );
-            var driver = await CreateDriver();
+            var currency = await _currencyRepository.GetCurrencyByCode(CurrencyCode.MAD);
+            if (currency is null)
+            {
+                Console.WriteLine("There is no currency " + CurrencyCode.MAD);
+                return;
+            }
+
+            HashSet<DateOnly> existingExchangeDates = (await _exchangeRateRepository.GetAllCurrencyDatesAsync(currency.Id)).ToHashSet();
+
+            List<ExchangeRate> bulkValues = [];
+            byte bulkCounter = 0;
+
+            using var driver = await CreateDriver();
 
             var start = new DateOnly(2020, 1, 3);
             var end = new DateOnly(2020, 2, 1);
             // var end = new DateOnly(2026, 12, 31);
-
             for (var date = start; date <= end; date = date.AddDays(1))
             {
-                string url = $"{baseUrl}?date={date.Day}%2F{date.Month}%2F{date.Year}&block=d1f170603d8b478a6a7b3447ae7f68f3#address-c2e03d492b315ebd7817808fde6acc08-d1f170603d8b478a6a7b3447ae7f68f3";
-                await Scrap(driver, url, date);
+                if (existingExchangeDates.Contains(date))
+                {
+                    Console.WriteLine("Record already exists!");
+                    continue;
+                }
+
+                var doc = await ScrapeByDate(driver, date);
+
+                if (doc is null) continue;
+
+                var exchangeRates = _parser.Parse(doc, date, currency.Id);
+
+                if (exchangeRates is null)
+                {
+                    Console.WriteLine("Error parsing data, check for page changes");
+                    continue;
+                }
+
+                bulkValues.Add(exchangeRates);
+                bulkCounter++;
+
+                if (bulkCounter >= bulkSaveNumber)
+                {
+                    await _exchangeRateRepository.BulkSaveAsync(bulkValues);
+                    bulkValues.Clear();
+                    bulkCounter = 0;
+                    existingExchangeDates.Add(date);
+                }
+                Console.WriteLine("-----------------------------------------------------------");
+            }
+
+            if (bulkValues.Count > 0)
+            {
+                await _exchangeRateRepository.BulkSaveAsync(bulkValues);
             }
 
         }
-        public async Task Scrap(ChromeDriver driver, string url, DateOnly date)
+
+        private async Task<HtmlDocument?> ScrapeByDate(UndetectedChromeDriver driver, DateOnly date)
         {
+            // random delay to avoid suspicious behaivour
+            int delay = Random.Shared.Next(4000, 10001);
+            await Task.Delay(delay);
+
+            string url = $"{baseUrl}?date={date.Day}%2F{date.Month}%2F{date.Year}&block=d1f170603d8b478a6a7b3447ae7f68f3#address-c2e03d492b315ebd7817808fde6acc08-d1f170603d8b478a6a7b3447ae7f68f3";
+
             try
             {
-                // Navigate to your protected currency rate website
                 await driver.Navigate().GoToUrlAsync(url);
-                var htmlContent = driver.ExecuteScript("return document.documentElement.outerHTML;") as string;
-                // Console.WriteLine(htmlContent);
-                // File.WriteAllText($"debug-{date}.html", htmlContent);
-                Console.WriteLine("Title: " + driver.Title);
-                Console.WriteLine("URL: " + driver.Url);
-                // await Task.Delay(10000);
                 WebDriverWait wait = new(driver, TimeSpan.FromSeconds(2));
-
-                try
-                {
-                    wait.Until(d => d.FindElements(By.CssSelector(".object_name")).Count > 0);
-                }
-                catch (WebDriverTimeoutException)
-                {
-                    Console.WriteLine($"No currency data for {date}. Skipping...");
-                    Console.WriteLine("-----------------------------------------------------------");
-                    return; // continue next loop
-                }
-
-                IWebElement row = driver.FindElement(By.CssSelector("tbody > tr:first-child"));
-
-                if (row is null)
-                {
-                    Console.WriteLine($"No currency data for {date}. row Skipping...");
-                    return;
-                }
-
-                string? currency = row.FindElement(By.CssSelector(".object_name"))?.Text;
-                string? purchaseValue = row.FindElement(By.CssSelector("td:nth-child(2) .number"))?.Text.Trim();
-                string? sellValue = row.FindElement(By.CssSelector("td:last-child .number"))?.Text.Trim();
-                Console.WriteLine(currency);
-                Console.WriteLine(purchaseValue);
-                Console.WriteLine(sellValue);
-
-
-                if (
-                    currency == "1 EURO" &&
-                    purchaseValue != null &&
-                    sellValue != null
-                )
-                {
-                    decimal purchase = decimal.Parse(purchaseValue, CultureInfo.InvariantCulture);
-                    decimal sell = decimal.Parse(sellValue, CultureInfo.InvariantCulture);
-                    decimal middleCourse = (purchase + sell) / 2;
-                    Console.WriteLine("Srednji kurs na dan " + date.ToString() + ": " + middleCourse);
-                }
-
-                // foreach (var t in divvs)
-                // {
-                //     Console.WriteLine(t.Text);
-                // }
-
+                wait.Until(d => d.FindElements(By.CssSelector(".object_name")).Count > 0);
             }
-            catch (System.Exception)
+            catch (WebDriverTimeoutException)
             {
-                Console.WriteLine("AISDOAISYTOAISUYTIUASYT");
-                throw;
+                Console.WriteLine($"No currency data for {date}. Skipping...");
+                Console.WriteLine("-----------------------------------------------------------");
+                return null;
             }
-            Console.WriteLine("-----------------------------------------------------------");
-            // var chromeOptions = new ChromeOptions();
-            // chromeOptions.AddArguments("headless");
 
-            // var driver = new ChromeDriver(chromeOptions);
+            if (driver.ExecuteScript("return document.documentElement.outerHTML;") is not string html) return null;
 
-            // // await driver.Navigate().GoToUrlAsync(_url);
-            // await driver.Navigate().GoToUrlAsync("https://formaideale.rs/novo");
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html);
 
-            // // var productHTMLElements = driver.FindElement(By.CssSelector("li.bullet2"));
-            // var productHTMLElements = driver.FindElements(By.CssSelector("article"));
-            // Console.WriteLine(productHTMLElements);
-            // // wait.Until(d => d.FindElements(By.CssSelector("table")).Count > 0);
-            // // IReadOnlyCollection<IWebElement> rows = driver.FindElements(By.CssSelector("tr"));
+            return doc;
         }
 
         private async Task<UndetectedChromeDriver> CreateDriver()
@@ -131,7 +128,6 @@ namespace gemini.Services
                 options: chromeOptions,
                 driverExecutablePath: await new ChromeDriverInstaller().Auto()
             );
-
         }
     }
 }
