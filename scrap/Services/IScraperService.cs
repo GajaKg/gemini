@@ -2,8 +2,7 @@ namespace gemini.Services
 {
     public interface IScraperService
     {
-        Task RunAsync();
-        // Task AddCurrencyAsync();
-        // Task GetUnprotected();
+        Task ScrapeDateRange(DateOnly start, DateOnly end, int? bulkSaveNumber = null, CancellationToken cancellationToken = default);
+        Task ScrapeLastDays(int lastDays, int? bulkSaveNumber = null, CancellationToken cancellationToken = default);
     }
 }

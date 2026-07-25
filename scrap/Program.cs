@@ -15,11 +15,11 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<ICurrencyRepository, CurrencyRepository>();
 builder.Services.AddScoped<IExchangeRateRepository, ExchangeRateRepository>();
 
-builder.Services.AddScoped<MADParserService>();
-builder.Services.AddScoped<IScraperService, MADScraperService>();
+// builder.Services.AddScoped<MADParserService>();
+// builder.Services.AddScoped<IScraperService, MADScraperService>();
 
-// builder.Services.AddScoped<IScraperService, XOFScraperService>();
-// builder.Services.AddScoped<XOFParserService>();
+builder.Services.AddScoped<IScraperService, XOFScraperService>();
+builder.Services.AddScoped<XOFParserService>();
 
 
 // Database
@@ -42,5 +42,5 @@ var scrapers = scope.ServiceProvider.GetServices<IScraperService>();
 
 foreach (var scraper in scrapers)
 {
-    await scraper.RunAsync();
+    await scraper.ScrapeDateRange(new DateOnly(2020,1,1), DateOnly.FromDateTime(DateTime.Today));
 }

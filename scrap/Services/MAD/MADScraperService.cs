@@ -30,6 +30,16 @@ namespace gemini.Services.MAD
             _parser = parser;
         }
 
+        public async Task ScrapeDateRange(DateOnly start, DateOnly end, int? bulkSaveNumber = 10, CancellationToken cancellationToken = default)
+        {
+
+        }
+
+        public async Task ScrapeLastDays(int lastDays, int? bulkSaveNumber = 5, CancellationToken cancellationToken = default)
+        {
+            
+        }
+
         public async Task RunAsync()
         {
 
@@ -90,7 +100,7 @@ namespace gemini.Services.MAD
 
         }
 
-        private async Task<HtmlDocument?> ScrapeByDate(UndetectedChromeDriver driver, DateOnly date)
+        private async Task<HtmlDocument?> ScrapeByDate(UndetectedChromeDriver driver, DateOnly date, CancellationToken cancellationToken = default)
         {
             // random delay to avoid suspicious behaivour
             int delay = Random.Shared.Next(4000, 10001);
