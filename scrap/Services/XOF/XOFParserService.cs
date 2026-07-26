@@ -14,7 +14,10 @@ namespace gemini.Services
             var rows = doc.DocumentNode.SelectNodes("//table/tbody/tr");
             // var header = doc.DocumentNode.SelectSingleNode("//h2");
             // Console.WriteLine(rows);
-            if (rows is null) return null;
+            if (rows is null) {
+                Console.WriteLine("HTML tag is missing, please check page html changes.");
+                return null;
+            };
 
             foreach (var row in rows.Skip(1))
             {

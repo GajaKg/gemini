@@ -72,6 +72,7 @@ namespace gemini.Services.XOF
 
             for (var date = start; date <= end; date = date.AddDays(1))
             {
+                Console.WriteLine($"Checking exchange rates for a day: {date}");
                 // check if rate exists for a given date, is so skip to next day
                 if (existingExchangeDates.Contains(date))
                 {
@@ -82,12 +83,12 @@ namespace gemini.Services.XOF
                 try
                 {
                     // get html
-                    HtmlDocument doc = await GetHtmlByDate(date, cancellationToken);
+                    HtmlDocument? doc = await GetHtmlByDate(date, cancellationToken);
+                    if (doc is null) continue;
 
                     // extracting data from html
                     ExchangeRate? exchangeRateParsed = _parser.Parse(doc, date, currency.Id);
-
-                    if (exchangeRateParsed == null) continue;
+                    if (exchangeRateParsed is null) continue;
 
                     bulkValues.Add(exchangeRateParsed);
                 }
@@ -98,9 +99,10 @@ namespace gemini.Services.XOF
 
                 // if criteria is not met then dont save exchange rates
                 if (bulkValues.Count < bulkSaveNumber) continue;
-                // save after collecting {bulkSaveNumber} items
+
                 try
                 {
+                    // save after collecting {bulkSaveNumber} items
                     await _exchangeRateRepository.BulkSaveAsync(bulkValues);
 
                     // update list of existing exchange rates
@@ -112,9 +114,9 @@ namespace gemini.Services.XOF
                     Console.WriteLine($"{bulkValues.Count} Rates are saved in db!!!!!");
                     bulkValues.Clear();
                 }
-                catch (System.Exception)
+                catch (System.Exception e)
                 {
-                    Console.WriteLine("Error saving exchange rates!");
+                    Console.WriteLine($"Error saving exchange rates! {e}");
                     throw;
                 }
             }
@@ -122,11 +124,19 @@ namespace gemini.Services.XOF
             // save remaining values
             if (bulkValues.Count > 0)
             {
-                await _exchangeRateRepository.BulkSaveAsync(bulkValues);
+                try
+                {
+                    await _exchangeRateRepository.BulkSaveAsync(bulkValues);
+                    Console.WriteLine($"{bulkValues.Count} Rates are saved in db!!!!!");
+                }
+                catch (System.Exception e)
+                {
+                    Console.WriteLine($"Error saving exchange rates! {e}");
+                }
             }
         }
 
-        private async Task<HtmlDocument> GetHtmlByDate(DateOnly date, CancellationToken cancellationToken = default)
+        private async Task<HtmlDocument?> GetHtmlByDate(DateOnly date, CancellationToken cancellationToken = default)
         {
             // url returns html table with rates on requested day
             // https://www.bceao.int/en/cours/get_all_devise_by_date?dateJour=2020-05-07";
@@ -137,11 +147,24 @@ namespace gemini.Services.XOF
             await Task.Delay(delay, cancellationToken);
 
             // geting page html
-            string html = await _httpClient.GetStringAsync(urlByDay, cancellationToken);
-            var doc = new HtmlDocument();
-            doc.LoadHtml(html);
+            try
+            {
+                string html = await _httpClient.GetStringAsync(urlByDay, cancellationToken);
 
-            return doc;
+                var doc = new HtmlDocument();
+                doc.LoadHtml(html);
+
+                return doc;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"Failed to download {date:yyyy-MM-dd}: {ex.Message}");
+                return null;
+            }
         }
 
     }
