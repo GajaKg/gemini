@@ -14,10 +14,12 @@ namespace gemini.Services
             var rows = doc.DocumentNode.SelectNodes("//table/tbody/tr");
             // var header = doc.DocumentNode.SelectSingleNode("//h2");
             // Console.WriteLine(rows);
-            if (rows is null) {
+            if (rows is null)
+            {
                 Console.WriteLine("HTML tag is missing, please check page html changes.");
                 return null;
-            };
+            }
+            ;
 
             foreach (var row in rows.Skip(1))
             {
@@ -26,8 +28,26 @@ namespace gemini.Services
 
                 if (currency == CurrencyNames.EUR)
                 {
-                    decimal purchase = decimal.Parse(cells[1].InnerText.Trim(), CultureInfo.GetCultureInfo("fr-FR"));
-                    decimal sell = decimal.Parse(cells[2].InnerText.Trim(), CultureInfo.GetCultureInfo("fr-FR"));
+                    string? purchaseValue = HtmlEntity.DeEntitize(
+                        cells[1].InnerText.Trim() ?? ""
+                    ).Trim();
+
+                    string? sellValue = HtmlEntity.DeEntitize(
+                        cells[2].InnerText.Trim() ?? ""
+                    ).Trim();
+
+                    if (!decimal.TryParse(purchaseValue, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal purchase))
+                    {
+                        Console.WriteLine($"Invalid purchase value: {purchaseValue}");
+                        return null;
+                    }
+
+                    if (!decimal.TryParse(sellValue, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal sell))
+                    {
+                        Console.WriteLine($"Invalid sell value: {sellValue}");
+                        return null;
+                    }
+
                     decimal middleCourse = (purchase + sell) / 2;
                     return new ExchangeRate
                     {
@@ -39,7 +59,6 @@ namespace gemini.Services
                     };
                 }
             }
-
             return null;
         }
     }

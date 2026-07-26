@@ -32,15 +32,28 @@ namespace gemini.Services.MAD
 
         public async Task ScrapeDateRange(DateOnly start, DateOnly end, int? bulkSaveNumber = 10, CancellationToken cancellationToken = default)
         {
+            Console.WriteLine("MAD Scraping started....");
 
+            int bulkSize = bulkSaveNumber ?? 10;
+            await Scrape(start, end, bulkSize, cancellationToken);
+
+            Console.WriteLine("-----------------------------------------------------------");
         }
 
         public async Task ScrapeLastDays(int lastDays, int? bulkSaveNumber = 5, CancellationToken cancellationToken = default)
         {
-            
+            Console.WriteLine("MAD Scraping started....");
+
+            int bulkSize = bulkSaveNumber ?? 5;
+            DateOnly end = DateOnly.FromDateTime(DateTime.Today);
+            DateOnly start = end.AddDays(-(lastDays - 1));
+
+            await Scrape(start, end, bulkSize, cancellationToken);
+
+            Console.WriteLine("-----------------------------------------------------------");
         }
 
-        public async Task RunAsync()
+        private async Task Scrape(DateOnly start, DateOnly end, int? bulkSaveNumber = 10, CancellationToken cancellationToken = default)
         {
 
             var currency = await _currencyRepository.GetCurrencyByCode(CurrencyCode.MAD);
@@ -53,13 +66,9 @@ namespace gemini.Services.MAD
             HashSet<DateOnly> existingExchangeDates = (await _exchangeRateRepository.GetAllCurrencyDatesAsync(currency.Id)).ToHashSet();
 
             List<ExchangeRate> bulkValues = [];
-            byte bulkCounter = 0;
 
             using var driver = await CreateDriver();
 
-            var start = new DateOnly(2020, 1, 3);
-            var end = new DateOnly(2020, 2, 1);
-            // var end = new DateOnly(2026, 12, 31);
             for (var date = start; date <= end; date = date.AddDays(1))
             {
                 if (existingExchangeDates.Contains(date))
@@ -68,27 +77,44 @@ namespace gemini.Services.MAD
                     continue;
                 }
 
-                var doc = await ScrapeByDate(driver, date);
-
-                if (doc is null) continue;
-
-                var exchangeRates = _parser.Parse(doc, date, currency.Id);
-
-                if (exchangeRates is null)
+                try
                 {
-                    Console.WriteLine("Error parsing data, check for page changes");
-                    continue;
+                    // get html
+                    HtmlDocument? doc = await GetHtmlByDate(driver, date, cancellationToken);
+                    if (doc is null) continue;
+
+                    // extracting data from html
+                    ExchangeRate? exchangeRateParsed = _parser.Parse(doc, date, currency.Id);
+                    if (exchangeRateParsed is null) continue;
+
+                    bulkValues.Add(exchangeRateParsed);
+                }
+                catch (System.Exception ex)
+                {
+                    Console.WriteLine($"Failed {date}: {ex.Message}");
                 }
 
-                bulkValues.Add(exchangeRates);
-                bulkCounter++;
-
-                if (bulkCounter >= bulkSaveNumber)
+                // if criteria is not met then dont save exchange rates
+                if (bulkValues.Count < bulkSaveNumber) continue;
+                
+                try
                 {
+                    // save after collecting {bulkSaveNumber} items
                     await _exchangeRateRepository.BulkSaveAsync(bulkValues);
+
+                    // update list of existing exchange rates
+                    foreach (var item in bulkValues)
+                    {
+                        existingExchangeDates.Add(item.Date);
+                    }
+
+                    Console.WriteLine($"{bulkValues.Count} Rates are saved in db!!!!!");
                     bulkValues.Clear();
-                    bulkCounter = 0;
-                    existingExchangeDates.Add(date);
+                }
+                catch (System.Exception e)
+                {
+                    Console.WriteLine($"Error saving exchange rates! {e}");
+                    throw;
                 }
                 Console.WriteLine("-----------------------------------------------------------");
             }
@@ -100,7 +126,7 @@ namespace gemini.Services.MAD
 
         }
 
-        private async Task<HtmlDocument?> ScrapeByDate(UndetectedChromeDriver driver, DateOnly date, CancellationToken cancellationToken = default)
+        private async Task<HtmlDocument?> GetHtmlByDate(UndetectedChromeDriver driver, DateOnly date, CancellationToken cancellationToken = default)
         {
             // random delay to avoid suspicious behaivour
             int delay = Random.Shared.Next(4000, 10001);

@@ -14,11 +14,10 @@ namespace gemini.Services.MAD
             var row = doc.DocumentNode.SelectSingleNode("//tbody/tr[1]");
             // IWebElement row = doc.FindElement(By.CssSelector("tbody > tr:first-child"));
 
-            if (row is null)
-            {
-                Console.WriteLine($"No currency data for {date}. row Skipping...");
+            if (row is null) {
+                Console.WriteLine("HTML tag is missing, please check page html changes.");
                 return null;
-            }
+            };
 
             string? currency = row.SelectSingleNode("./td[1]")?.InnerText.Trim();
             string? purchaseValue = HtmlEntity.DeEntitize(
@@ -28,12 +27,6 @@ namespace gemini.Services.MAD
             string? sellValue = HtmlEntity.DeEntitize(
                 row.SelectSingleNode("./td[3]//span[@class='number']")?.InnerText ?? ""
             ).Trim();
-
-            //         string? sellValue = row.SelectSingleNode("./td[3]")?.InnerText.Replace("\u00A0", "")
-            // .Split(' ')[0].Trim();
-            Console.WriteLine(currency);
-            Console.WriteLine(purchaseValue);
-            Console.WriteLine(sellValue);
 
             if (
                 currency == "1 EURO" &&
@@ -52,6 +45,7 @@ namespace gemini.Services.MAD
                     Console.WriteLine($"Invalid sell value: {sellValue}");
                     return null;
                 }
+
                 decimal middleCourse = (purchase + sell) / 2;
                 Console.WriteLine("Srednji kurs na dan " + date.ToString() + ": " + middleCourse);
 
@@ -64,8 +58,6 @@ namespace gemini.Services.MAD
                     Date = date
                 };
             }
-
-
             return null;
         }
     }
