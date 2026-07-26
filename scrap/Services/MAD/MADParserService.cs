@@ -8,7 +8,8 @@ namespace gemini.Services.MAD
 {
     public class MADParserService : IParserService
     {
-        public ExchangeRate? Parse(HtmlDocument doc, DateOnly date, int currencyId)
+        // public ExchangeRate? Parse(HtmlDocument doc, DateOnly date, int currencyId)
+        public ExchangeRateRaw? Parse(HtmlDocument doc)
         {
 
             var row = doc.DocumentNode.SelectSingleNode("//tbody/tr[1]");
@@ -47,15 +48,12 @@ namespace gemini.Services.MAD
                 }
 
                 decimal middleCourse = (purchase + sell) / 2;
-                Console.WriteLine("Srednji kurs na dan " + date.ToString() + ": " + middleCourse);
 
-                return new ExchangeRate
+                return new ExchangeRateRaw
                 {
-                    CurrencyId = currencyId,
                     Sell = sell,
                     Buy = purchase,
                     Middle = middleCourse,
-                    Date = date
                 };
             }
             return null;
