@@ -19,4 +19,10 @@ namespace gemini.Models
             return $"{CurrencyId}: Buy={Buy}, Sell={Sell}, Middle={Middle}";
         }
     }
+    public class ExchangeRateRaw
+    {
+        public decimal Sell { get; set; }
+        public decimal Buy { get; set; }
+        public decimal Middle { get; set; }
+    }
 }
