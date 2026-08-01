@@ -2,11 +2,13 @@
 using gemini.Models;
 using gemini.Repositories;
 using gemini.Services.CurrencyProviders;
+using Microsoft.Extensions.Logging;
 
 namespace gemini.Services
 {
     public class ExchangeRateScraper : IExchangeRateScraper
     {
+        private readonly ILogger<ExchangeRateScraper> _logger;
         private readonly ICurrencyProvider _currencyProvider;
         private readonly ICurrencyRepository _currencyRepository;
         private readonly IExchangeRateRepository _exchangeRateRepository;
@@ -14,12 +16,14 @@ namespace gemini.Services
         public ExchangeRateScraper(
             ICurrencyProvider currencyProvider,
             ICurrencyRepository currencyRepository,
-            IExchangeRateRepository exchangeRateRepository
+            IExchangeRateRepository exchangeRateRepository,
+            ILogger<ExchangeRateScraper> logger
         )
         {
             _currencyProvider = currencyProvider;
             _currencyRepository = currencyRepository;
             _exchangeRateRepository = exchangeRateRepository;
+            _logger = logger;
         }
 
         public async Task ScrapeDateRange(DateOnly start, DateOnly end, int? bulkSaveNumber = 10, CancellationToken cancellationToken = default)
@@ -48,13 +52,14 @@ namespace gemini.Services
             var currency = await _currencyRepository.GetCurrencyByCode(_currencyProvider.CurrencyCode);
             if (currency is null)
             {
-                Console.WriteLine("❌ There is no currency " + _currencyProvider.CurrencyCode);
+                // Console.WriteLine("❌ There is no currency " + _currencyProvider.CurrencyCode);
+                _logger.LogError("❌ There is no currency {CurrencyCode}", _currencyProvider.CurrencyCode);
                 return;
             }
 
             HashSet<DateOnly> existingExchangeDates = (await _exchangeRateRepository.GetAllCurrencyDatesAsync(currency.Id)).ToHashSet();
 
-            Console.WriteLine($"⏳ ⏳ ⏳ {_currencyProvider.CurrencyCode} Scraping Started ⏳ ⏳ ⏳");
+            _logger.LogInformation("⏳ ⏳ ⏳ {CUrrencyCode} Scraping Started ⏳ ⏳ ⏳", _currencyProvider.CurrencyCode);
 
             List<ExchangeRate> bulkValues = [];
 
@@ -62,7 +67,7 @@ namespace gemini.Services
             {
                 if (existingExchangeDates.Contains(date))
                 {
-                    Console.WriteLine("❌ Record already exists!");
+                    _logger.LogWarning("❌ Record already exists!");
                     continue;
                 }
 
@@ -72,7 +77,7 @@ namespace gemini.Services
 
                     if (exchangeRateRaw is null)
                     {
-                        Console.WriteLine($"---- Missing date {date:d}");
+                        _logger.LogWarning("---- Missing date: {Date:d}", date);
                         continue;
                     }
 
@@ -87,11 +92,11 @@ namespace gemini.Services
 
                     bulkValues.Add(exchangeRateParsed);
 
-                    Console.WriteLine($"🗂  Got currency: {exchangeRateParsed.DetailInfo()}, adding for bulk save.");
+                    _logger.LogInformation("🗂  Got currency: {ExchangeRateParsed} for date {Date}, adding for bulk save.", exchangeRateParsed.DetailInfo(), date);
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
-                    Console.WriteLine($"❌ Failed {date}: {ex.Message}");
+                    _logger.LogError(ex, "❌ Failed {date}", date);
                 }
 
                 // if criteria is not met then dont save exchange rates
@@ -108,13 +113,13 @@ namespace gemini.Services
                         existingExchangeDates.Add(item.Date);
                     }
 
-                    Console.WriteLine($"✅ {bulkValues.Count} Rates are saved in db!!!!!");
+                    // Console.WriteLine($"✅ {bulkValues.Count} Rates are saved in db!!!!!");
+                    _logger.LogInformation("✅ {Count} Rates are saved in db!!!!!", bulkValues.Count);
                     bulkValues.Clear();
                 }
-                catch (System.Exception e)
+                catch (Exception e)
                 {
-                    Console.WriteLine($"❌ Error saving exchange rates! {e}");
-                    throw;
+                    _logger.LogError(e, "❌ Error saving exchange rates!");
                 }
                 Console.WriteLine("-----------------------------------------------------------");
             }
@@ -123,7 +128,7 @@ namespace gemini.Services
             {
                 await _exchangeRateRepository.BulkSaveAsync(bulkValues);
             }
-            Console.WriteLine($"🟢 {currency.Code} Scraping Completed ⌛️");
+            _logger.LogInformation("🟢 {Code} Scraping Completed ⌛️", currency.Code);
         }
     }
 }

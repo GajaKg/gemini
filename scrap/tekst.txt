@@ -1,0 +1,64 @@
+Sta znaci dobro odradjen projekat:
+
+Validacija ulaznih parametara
+Login
+Sigurnost - ne sme postoji mogucnost SQL injection-a, zaobilazenja credencijala i sl.
+Voditi racuna o otvorenim default rutama (posebno MVC ima otvoren register, manage account i slicno, one se moraju zatvoriti za ne javne projekte - mali broj korisnika, ili interne projekte)
+Performanse
+Zastita od otkrivanja tehnologije u kojem je radjen projekat (HTTP header-i)
+Paketi i verzija framework-a - latest, zbog vulnerabilities
+Logovanje - audit - logovanje gresaka, logovanje login-ova i sl.
+Prihvatanje izuzetaka - try/catch
+RateLimiter
+Cancellation token - kada se i gde koristi
+Dokumentacija!!! - tehnicka i korisnicka!
+Summary za svaku metodu obavezno
+Koriscenje Interfejsa, naravno gde treba kao i dependency injection, code reuse i voditi racuna o tome sta ce se desiti kada se odredjeni deo koda promeni
+    koliko ce uticati na druge delove koda - jedan od primera su prametri metode, koriscenje jedne klase za vise parametra daje prednost...
+Metode ne smeju imati puno koda - voditi racuna o single responsibility
+Ispratiti tok programa, ocekivati neocekivano
+Obavezno retry policy - baza, api
+Obavezno UNIT testovi - xUnit.
+Pozeljno, ali ne i obavezno integracioni test-ovi, bice veliki plus za dobijanje posla
+     za API integracioni test moze odraditi i konzolna aplikacija nad test bazom i test api-jem koji je postavljen na development serveru, u tvom slucaju postavis ga lokalno.
+Dodati swagger
+
+Sta je jos bitno:
+
+Poznavanje SOLID principa - odlicna knjiga Robert C. Martin - Clean architecture i Clean code
+POznavanje objektno orijentisanog programiranja, dobices pitanja i proverice se razumevanje, sta je objektno orijentisano programiranje, nasledjivanje, apstraktne klase, interfejsi
+Poznavanje osnovnih i najcesce koriscenih dizajn paterna: Build, Strategy, Factory, Facade, Decorator...
+Imati osecaj o kolicini podataka u bazi, sta je mnogo podataka
+Jako bitno za bazu podataka (MS SQL) - cemu sluze indeksi, da li je dobro indeksirati sve kolone, ako da zasto da ako ne zasto ne.
+Defragmentacija indeksa, zasto se radi i kako dolazi do nje
+Kako ispod haube rade indeksi
+Normalizacija baze podataka, prva, druga, treca normalizaciona forma
+Moras da razumes razliku izmedju blazor server i blazor web assembly kao i to kako je nastao i zasto je nastao blazor i kako radi ispod haube (ali samo osnovno, ne moras ulaziti u detalje)
+
+Projekat za Gemini Software:
+
+API koji ce vratiti valutu na odredjeni dan, npr. koja je valuta bila za Marokanski dinar (MAD) u odnosu na euro (takodje Burkina faso XOF).
+Potreban ti je skreper da bi prikupio podatke, u pocetku da pokupi npr. od 2020, a kasnije svakodnevno da se azurira.
+Pronaci sajt koji pruza pouzdane informacije kao npr. Narodna banka i sl. Ispitati.
+Npr. potrebno mi je da znam kakav je odnos bio Euro - Marokanski dinar na dan 06.05.2022.
+POtrebno je imati sve podatke u nasoj bazi i da moze konzolna aplikacija za sinhronizaciju i izracunavanje KPI statistike brzo dobiti podatke.
+Pokretanje aplikacije za sinhronizaciju podataka o valutama mora biti potpuno automatizovan. Ukoliko dodje do greske, npr. sajt promeni UI,
+     developer mora biti obavesten preko mejla, greska log-ovana.
+Raditi uzimanje podataka za prethodnih nedelju dana i sinhronizovati sa bazom.
+Mozda ce ti trebati nesto kao sto je selenium test da ga koristis kao screp, proveri da li ce ti uopste trebati.
+
+Imas tu dva modula, jedan da pribavlja podatke, sto bi bio u stvari aplikacija za sinhronizaciju i drugi konzumni API.
+U principu dve aplikacije pod jednim projektom.
+
+ulazni podaci: dan, valuta, valuta za poredjenje
+izlazni podatak: vrednost valute u odnosu na valutu za poredjenje
+
+npr.
+dan: 06.05.2022.
+valuta: Marokanski dinar
+valuta za poredjenje: euro
+
+izlaz: 120 (markonaskih dinara je jedan euro)
+
+za pocetak Burkina Faso, Marocco u odnosu na euro
+raspitati se kako se beleze ti podaci, koja je referenca, koeficijent, mora da postoji neki centralni koeficijent, proveriti sa AI - chat gpt

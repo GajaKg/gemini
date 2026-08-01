@@ -1,13 +1,19 @@
-
-
 using System.Globalization;
 using gemini.Models;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
 
 namespace gemini.Services.CurrencyParser
 {
     public class MADParserService : IParserService
     {
+        private readonly ILogger<MADParserService> _logger;
+        
+        public MADParserService(ILogger<MADParserService> logger)
+        {
+            _logger = logger;
+            
+        }
         public ExchangeRateRaw? Parse(HtmlDocument doc)
         {
 
@@ -16,7 +22,7 @@ namespace gemini.Services.CurrencyParser
 
             if (row is null) 
             {
-                Console.WriteLine("⚠️  Missing currency or please check page for html changes.");
+                _logger.LogWarning("⚠️  Missing currency or please check page for html changes.");
                 return null;
             };
 
@@ -37,13 +43,13 @@ namespace gemini.Services.CurrencyParser
             {
                 if (!decimal.TryParse(purchaseValue, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal purchase))
                 {
-                    Console.WriteLine($"⚠️  Invalid purchase value: {purchaseValue}");
+                    _logger.LogError("⚠️  Invalid purchase value: {PurchaseValue}", purchaseValue);
                     return null;
                 }
 
                 if (!decimal.TryParse(sellValue, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal sell))
                 {
-                    Console.WriteLine($"⚠️  Invalid sell value: {sellValue}");
+                    _logger.LogError("⚠️  Invalid sell value: {SellValue}", sellValue);
                     return null;
                 }
 

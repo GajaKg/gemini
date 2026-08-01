@@ -8,8 +8,19 @@ using gemini.Services;
 using gemini.Services.HtmlProviders;
 using gemini.Services.CurrencyProviders;
 using gemini.Services.CurrencyParser;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 var builder = Host.CreateApplicationBuilder(args);
+
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: false);
+
+builder.Services.AddSerilog((services, loggerConfiguration) =>
+{
+    loggerConfiguration
+        .ReadFrom.Configuration(builder.Configuration);
+});
 
 builder.Services.AddHttpClient();
 
@@ -34,7 +45,8 @@ builder.Services.AddScoped<IExchangeRateScraper>(sp =>
     new ExchangeRateScraper(
         sp.GetRequiredService<MadProvider>(),
         sp.GetRequiredService<ICurrencyRepository>(),
-        sp.GetRequiredService<IExchangeRateRepository>()
+        sp.GetRequiredService<IExchangeRateRepository>(),
+        sp.GetRequiredService<ILogger<ExchangeRateScraper>>()
     )
 );
 
@@ -49,13 +61,13 @@ builder.Services.AddScoped<XofProvider>();
 builder.Services.AddScoped<ICurrencyProvider>(sp =>
     sp.GetRequiredService<XofProvider>());
 
-builder.Services.AddScoped<IExchangeRateScraper>(sp =>
-    new ExchangeRateScraper(
-        sp.GetRequiredService<XofProvider>(),
-        sp.GetRequiredService<ICurrencyRepository>(),
-        sp.GetRequiredService<IExchangeRateRepository>()
-    )
-);
+// builder.Services.AddScoped<IExchangeRateScraper>(sp =>
+//     new ExchangeRateScraper(
+//         sp.GetRequiredService<XofProvider>(),
+//         sp.GetRequiredService<ICurrencyRepository>(),
+//         sp.GetRequiredService<IExchangeRateRepository>()
+//     )
+// );
 
 // Database
 builder.Services.AddDbContext<ApplicationDBContext>(options =>

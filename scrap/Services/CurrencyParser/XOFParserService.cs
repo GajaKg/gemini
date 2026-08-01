@@ -3,18 +3,25 @@ using System.Globalization;
 using gemini.Interfaces;
 using gemini.Models;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
 
 namespace gemini.Services.CurrencyParser
 {
     public class XOFParserService : IParserService
     {
+        private readonly ILogger<XOFParserService> _logger;
+        public XOFParserService(ILogger<XOFParserService> logger)
+        {
+            _logger = logger;
+        }
+
         public ExchangeRateRaw? Parse(HtmlDocument doc)
         {
             var rows = doc.DocumentNode.SelectNodes("//table/tbody/tr");
-       
+
             if (rows is null)
             {
-                Console.WriteLine("⚠️  Missing currency or please check page for html changes.");
+                _logger.LogWarning("⚠️  Missing currency or please check page for html changes.");
                 return null;
             }
 
@@ -35,13 +42,13 @@ namespace gemini.Services.CurrencyParser
 
                 if (!decimal.TryParse(purchaseValue, NumberStyles.Number, CultureInfo.GetCultureInfo("fr-FR"), out decimal purchase))
                 {
-                    Console.WriteLine($"⚠️  Invalid purchase value: {purchaseValue}");
+                    _logger.LogWarning("⚠️  Invalid purchase value: {PurchaseValue}", purchaseValue);
                     return null;
                 }
 
                 if (!decimal.TryParse(sellValue, NumberStyles.Number, CultureInfo.GetCultureInfo("fr-FR"), out decimal sell))
                 {
-                    Console.WriteLine($"⚠️  Invalid sell value: {sellValue}");
+                    _logger.LogWarning("⚠️  Invalid sell value: {SellValue}", sellValue);
                     return null;
                 }
 

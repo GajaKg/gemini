@@ -3,6 +3,7 @@ using gemini.Models;
 using gemini.Services.CurrencyParser;
 using gemini.Services.HtmlProviders;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
 
 namespace gemini.Services.CurrencyProviders
 {
@@ -16,7 +17,7 @@ namespace gemini.Services.CurrencyProviders
         private readonly ISeleniumProvider _driverProvider;
         private readonly XOFParserService _parserService;
 
-        public XofProvider(ISeleniumProvider driverProvider, XOFParserService parserService)
+        public XofProvider(ISeleniumProvider driverProvider, XOFParserService parserService, ILogger<XofProvider> logger)
         {
             _driverProvider = driverProvider;
             _parserService = parserService;

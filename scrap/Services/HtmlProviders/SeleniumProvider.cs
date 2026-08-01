@@ -1,5 +1,6 @@
 
 using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using SeleniumUndetectedChromeDriver;
@@ -8,6 +9,13 @@ namespace gemini.Services.HtmlProviders
 {
     public class SeleniumProvider : ISeleniumProvider
     {
+        private readonly ILogger<SeleniumProvider> _logger;
+
+        public SeleniumProvider(ILogger<SeleniumProvider> logger)
+        {
+            _logger = logger;
+        }
+
         public async Task<HtmlDocument?> GetHtml(string url, CancellationToken cancellationToken = default)
         {
             try
@@ -26,7 +34,7 @@ namespace gemini.Services.HtmlProviders
             }
             catch (HttpRequestException ex)
             {
-                Console.WriteLine($"❌ Failed to download: {ex.Message}");
+                _logger.LogError(ex, "❌ Failed request");
                 return null;
             }
 
