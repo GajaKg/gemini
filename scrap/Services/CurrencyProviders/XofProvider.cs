@@ -1,10 +1,10 @@
 using gemini.Interfaces;
 using gemini.Models;
-using gemini.Services;
+using gemini.Services.CurrencyParser;
 using gemini.Services.HtmlProviders;
 using HtmlAgilityPack;
 
-namespace gemini.Services2.CurrencyProviders
+namespace gemini.Services.CurrencyProviders
 {
 
     public class XofProvider : ICurrencyProvider
@@ -13,12 +13,12 @@ namespace gemini.Services2.CurrencyProviders
 
         private const string baseUrl = "https://www.bceao.int/en/cours/get_all_devise_by_date";
 
-        private readonly IHttpClientProvider _httpClientProvider;
+        private readonly ISeleniumProvider _driverProvider;
         private readonly XOFParserService _parserService;
 
-        public XofProvider(IHttpClientProvider httpClientProvider, XOFParserService parserService)
+        public XofProvider(ISeleniumProvider driverProvider, XOFParserService parserService)
         {
-            _httpClientProvider = httpClientProvider;
+            _driverProvider = driverProvider;
             _parserService = parserService;
         }
 
@@ -30,7 +30,7 @@ namespace gemini.Services2.CurrencyProviders
             string urlByDay = $"{baseUrl}?dateJour={date.Year}-{date.Month}-{date.Day}";
 
             // get html
-            HtmlDocument? doc = await _httpClientProvider.GetHtml(urlByDay, cancellationToken);
+            HtmlDocument? doc = await _driverProvider.GetHtml(urlByDay, cancellationToken);
             if (doc is null) return null;
 
             // extracting data from html

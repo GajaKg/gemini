@@ -1,32 +1,23 @@
 
 using gemini.Models;
 using gemini.Repositories;
-using gemini.Services;
+using gemini.Services.CurrencyProviders;
 
-namespace gemini.Services2
+namespace gemini.Services
 {
     public class ExchangeRateScraper : IExchangeRateScraper
     {
-        // private readonly IHtmlProvider _htmlProvider;
-        // private readonly IParserService _parserService;
         private readonly ICurrencyProvider _currencyProvider;
         private readonly ICurrencyRepository _currencyRepository;
         private readonly IExchangeRateRepository _exchangeRateRepository;
 
         public ExchangeRateScraper(
-            // IHtmlProvider htmlProvider,
-            // IParserService parserService,
             ICurrencyProvider currencyProvider,
-            // CurrencyCode currencyCode,
             ICurrencyRepository currencyRepository,
             IExchangeRateRepository exchangeRateRepository
         )
         {
-            // _htmlProvider = htmlProvider;
-            // _currencyCode = currencyCode;
             _currencyProvider = currencyProvider;
-            // _parserService = parserService;
-
             _currencyRepository = currencyRepository;
             _exchangeRateRepository = exchangeRateRepository;
         }
@@ -36,7 +27,6 @@ namespace gemini.Services2
             int bulkSize = bulkSaveNumber ?? 10;
             await Scrape(start, end, bulkSize, cancellationToken);
 
-            Console.WriteLine("-----------------------------------------------------------");
         }
 
         public async Task ScrapeLastDays(int lastDays, int? bulkSaveNumber = 5, CancellationToken cancellationToken = default)
@@ -46,8 +36,6 @@ namespace gemini.Services2
             DateOnly start = end.AddDays(-(lastDays - 1));
 
             await Scrape(start, end, bulkSize, cancellationToken);
-
-            Console.WriteLine("-----------------------------------------------------------");
         }
 
         public async Task Scrape(
@@ -57,16 +45,16 @@ namespace gemini.Services2
             CancellationToken cancellationToken = default
         )
         {
-            Console.WriteLine($"{_currencyProvider.CurrencyCode} Scraping Started....");
-
             var currency = await _currencyRepository.GetCurrencyByCode(_currencyProvider.CurrencyCode);
             if (currency is null)
             {
-                Console.WriteLine("There is no currency " + _currencyProvider.CurrencyCode);
+                Console.WriteLine("❌ There is no currency " + _currencyProvider.CurrencyCode);
                 return;
             }
 
             HashSet<DateOnly> existingExchangeDates = (await _exchangeRateRepository.GetAllCurrencyDatesAsync(currency.Id)).ToHashSet();
+
+            Console.WriteLine($"⏳ ⏳ ⏳ {_currencyProvider.CurrencyCode} Scraping Started ⏳ ⏳ ⏳");
 
             List<ExchangeRate> bulkValues = [];
 
@@ -74,7 +62,7 @@ namespace gemini.Services2
             {
                 if (existingExchangeDates.Contains(date))
                 {
-                    Console.WriteLine("Record already exists!");
+                    Console.WriteLine("❌ Record already exists!");
                     continue;
                 }
 
@@ -82,7 +70,11 @@ namespace gemini.Services2
                 {
                     var exchangeRateRaw = await _currencyProvider.GetExchangeRate(date, cancellationToken);
 
-                    if (exchangeRateRaw is null) continue;
+                    if (exchangeRateRaw is null)
+                    {
+                        Console.WriteLine($"---- Missing date {date:d}");
+                        continue;
+                    }
 
                     var exchangeRateParsed = new ExchangeRate
                     {
@@ -94,10 +86,12 @@ namespace gemini.Services2
                     };
 
                     bulkValues.Add(exchangeRateParsed);
+
+                    Console.WriteLine($"🗂  Got currency: {exchangeRateParsed.DetailInfo()}, adding for bulk save.");
                 }
                 catch (System.Exception ex)
                 {
-                    Console.WriteLine($"Failed {date}: {ex.Message}");
+                    Console.WriteLine($"❌ Failed {date}: {ex.Message}");
                 }
 
                 // if criteria is not met then dont save exchange rates
@@ -114,12 +108,12 @@ namespace gemini.Services2
                         existingExchangeDates.Add(item.Date);
                     }
 
-                    Console.WriteLine($"{bulkValues.Count} Rates are saved in db!!!!!");
+                    Console.WriteLine($"✅ {bulkValues.Count} Rates are saved in db!!!!!");
                     bulkValues.Clear();
                 }
                 catch (System.Exception e)
                 {
-                    Console.WriteLine($"Error saving exchange rates! {e}");
+                    Console.WriteLine($"❌ Error saving exchange rates! {e}");
                     throw;
                 }
                 Console.WriteLine("-----------------------------------------------------------");
@@ -129,16 +123,7 @@ namespace gemini.Services2
             {
                 await _exchangeRateRepository.BulkSaveAsync(bulkValues);
             }
+            Console.WriteLine($"🟢 {currency.Code} Scraping Completed ⌛️");
         }
-
-        // public Task ScrapeDateRange(DateOnly start, DateOnly end, int? bulkSaveNumber = null, CancellationToken cancellationToken = default)
-        // {
-        //     throw new NotImplementedException();
-        // }
-
-        // public Task ScrapeLastDays(int lastDays, int? bulkSaveNumber = null, CancellationToken cancellationToken = default)
-        // {
-        //     throw new NotImplementedException();
-        // }
     }
 }

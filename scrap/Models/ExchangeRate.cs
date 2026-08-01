@@ -1,6 +1,4 @@
 
-using System.ComponentModel.DataAnnotations;
-
 namespace gemini.Models
 {
     public class ExchangeRate
@@ -14,11 +12,12 @@ namespace gemini.Models
 
         public Currency? Currency = null;
 
-        public override string ToString()
+        public string DetailInfo()
         {
             return $"{CurrencyId}: Buy={Buy}, Sell={Sell}, Middle={Middle}";
         }
     }
+
     public class ExchangeRateRaw
     {
         public decimal Sell { get; set; }

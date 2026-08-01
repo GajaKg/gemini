@@ -1,11 +1,10 @@
 
 using HtmlAgilityPack;
-using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using SeleniumUndetectedChromeDriver;
 
-namespace gemini.Services2.HtmlProviders
+namespace gemini.Services.HtmlProviders
 {
     public class SeleniumProvider : ISeleniumProvider
     {
@@ -17,7 +16,6 @@ namespace gemini.Services2.HtmlProviders
 
                 await driver.Navigate().GoToUrlAsync(url);
                 WebDriverWait wait = new(driver, TimeSpan.FromSeconds(2));
-                wait.Until(d => d.FindElements(By.CssSelector(".object_name")).Count > 0);
 
                 if (driver.ExecuteScript("return document.documentElement.outerHTML;") is not string html) return null;
 
@@ -26,10 +24,9 @@ namespace gemini.Services2.HtmlProviders
 
                 return doc;
             }
-            catch (WebDriverTimeoutException)
+            catch (HttpRequestException ex)
             {
-                // Console.WriteLine($"No currency data for {date}. Skipping...");
-                Console.WriteLine("-----------------------------------------------------------");
+                Console.WriteLine($"❌ Failed to download: {ex.Message}");
                 return null;
             }
 

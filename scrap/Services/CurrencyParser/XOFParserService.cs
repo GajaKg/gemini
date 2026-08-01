@@ -4,23 +4,19 @@ using gemini.Interfaces;
 using gemini.Models;
 using HtmlAgilityPack;
 
-namespace gemini.Services
+namespace gemini.Services.CurrencyParser
 {
     public class XOFParserService : IParserService
     {
-        // public ExchangeRate? Parse(HtmlDocument doc, DateOnly date, int currencyId)
         public ExchangeRateRaw? Parse(HtmlDocument doc)
-        // public ExchangeRate? Parse(HtmlDocument doc)
         {
             var rows = doc.DocumentNode.SelectNodes("//table/tbody/tr");
-            // var header = doc.DocumentNode.SelectSingleNode("//h2");
-            // Console.WriteLine(rows);
+       
             if (rows is null)
             {
-                Console.WriteLine("HTML tag is missing, please check page html changes.");
+                Console.WriteLine("⚠️  Missing currency or please check page for html changes.");
                 return null;
             }
-            ;
 
             foreach (var row in rows.Skip(1))
             {
@@ -39,13 +35,13 @@ namespace gemini.Services
 
                 if (!decimal.TryParse(purchaseValue, NumberStyles.Number, CultureInfo.GetCultureInfo("fr-FR"), out decimal purchase))
                 {
-                    Console.WriteLine($"Invalid purchase value: {purchaseValue}");
+                    Console.WriteLine($"⚠️  Invalid purchase value: {purchaseValue}");
                     return null;
                 }
 
                 if (!decimal.TryParse(sellValue, NumberStyles.Number, CultureInfo.GetCultureInfo("fr-FR"), out decimal sell))
                 {
-                    Console.WriteLine($"Invalid sell value: {sellValue}");
+                    Console.WriteLine($"⚠️  Invalid sell value: {sellValue}");
                     return null;
                 }
 

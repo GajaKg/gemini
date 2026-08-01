@@ -29,7 +29,7 @@ namespace gemini.Services.HtmlProviders
             }
             catch (HttpRequestException ex)
             {
-                Console.WriteLine($"Failed to download: {ex.Message}");
+                Console.WriteLine($"❌ Failed to download: {ex.Message}");
                 return null;
             }
         }

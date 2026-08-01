@@ -1,7 +1,7 @@
 
 using HtmlAgilityPack;
 
-namespace gemini.Services2.HtmlProviders
+namespace gemini.Services.HtmlProviders
 {
     public interface ISeleniumProvider
     {

@@ -6,10 +6,8 @@ using Microsoft.Extensions.Configuration;
 using gemini.Repositories;
 using gemini.Services;
 using gemini.Services.HtmlProviders;
-using gemini.Services2;
-using gemini.Services2.CurrencyProviders;
-using gemini.Services2.HtmlProviders;
-using gemini.Services.MAD;
+using gemini.Services.CurrencyProviders;
+using gemini.Services.CurrencyParser;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -32,13 +30,13 @@ builder.Services.AddScoped<MadProvider>();
 builder.Services.AddScoped<ICurrencyProvider>(sp =>
     sp.GetRequiredService<MadProvider>());
 
-// builder.Services.AddScoped<IExchangeRateScraper>(sp =>
-//     new ExchangeRateScraper(
-//         sp.GetRequiredService<MadProvider>(),
-//         sp.GetRequiredService<ICurrencyRepository>(),
-//         sp.GetRequiredService<IExchangeRateRepository>()
-//     )
-// );
+builder.Services.AddScoped<IExchangeRateScraper>(sp =>
+    new ExchangeRateScraper(
+        sp.GetRequiredService<MadProvider>(),
+        sp.GetRequiredService<ICurrencyRepository>(),
+        sp.GetRequiredService<IExchangeRateRepository>()
+    )
+);
 
 /** 
 * register XOF
@@ -59,7 +57,6 @@ builder.Services.AddScoped<IExchangeRateScraper>(sp =>
     )
 );
 
-
 // Database
 builder.Services.AddDbContext<ApplicationDBContext>(options =>
 {
@@ -75,11 +72,10 @@ using var scope = host.Services.CreateScope();
 var db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
 await db.Database.MigrateAsync();
 
-// var parser = scope.ServiceProvider.GetRequiredService<IParserService>();
 var scrapers = scope.ServiceProvider.GetServices<IExchangeRateScraper>();
-
 foreach (var scraper in scrapers)
 {
-    await scraper.ScrapeDateRange(new DateOnly(2020, 1, 1), DateOnly.FromDateTime(DateTime.Today), 2);
+    // await scraper.ScrapeDateRange(new DateOnly(2020, 1, 1), DateOnly.FromDateTime(DateTime.Today), 2);
+    await scraper.ScrapeDateRange(new DateOnly(2020, 1, 1), new DateOnly(2020, 1, 5), 2);
     // await scraper.ScrapeLastDays(3);
 }
