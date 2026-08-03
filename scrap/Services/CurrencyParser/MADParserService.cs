@@ -14,7 +14,7 @@ namespace gemini.Services.CurrencyParser
             _logger = logger;
             
         }
-        public ExchangeRateRaw? Parse(HtmlDocument doc)
+        List<ExchangeRateRaw>? IParserService.Parse(HtmlDocument doc)
         {
 
             var row = doc.DocumentNode.SelectSingleNode("//tbody/tr[1]");
@@ -54,15 +54,16 @@ namespace gemini.Services.CurrencyParser
                 }
 
                 decimal middleCourse = (purchase + sell) / 2;
-
-                return new ExchangeRateRaw
-                {
-                    Sell = sell,
-                    Buy = purchase,
-                    Middle = middleCourse,
-                };
+return [];
+                // return new ExchangeRateRaw
+                // {
+                //     Sell = sell,
+                //     Buy = purchase,
+                //     Middle = middleCourse,
+                // };
             }
             return null;
         }
+
     }
 }

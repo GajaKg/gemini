@@ -2,11 +2,13 @@ namespace gemini.Interfaces
 {
     public static class CurrencyNames
     {
-        public const string XOF = "XOF";
+        public const CurrencyCode XOF = CurrencyCode.XOF;
         public const string XOFFullName = "West African CFA franc";
-        public const string MAD = "MAD";
+        public const CurrencyCode MAD = CurrencyCode.MAD;
         public const string MADFullName = "Marrocan Dirham";
-        public const string EUR = "EUR";
+        public const CurrencyCode EUR = CurrencyCode.EUR;
         public const string EURFullName = "Euro";
+        public const CurrencyCode USD = CurrencyCode.USD;
+        public const string USDFullName = "Dollar";
     }
 }

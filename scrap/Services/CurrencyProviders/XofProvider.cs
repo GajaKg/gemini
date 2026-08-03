@@ -23,7 +23,7 @@ namespace gemini.Services.CurrencyProviders
             _parserService = parserService;
         }
 
-        public async Task<ExchangeRateRaw?> GetExchangeRate(DateOnly date, CancellationToken cancellationToken = default)
+        public async Task<List<ExchangeRateRaw>?> GetExchangeRate(DateOnly date, CancellationToken cancellationToken = default)
         {
             int delay = Random.Shared.Next(4000, 10001);
             await Task.Delay(delay, cancellationToken);

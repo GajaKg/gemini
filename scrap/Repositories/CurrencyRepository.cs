@@ -20,7 +20,7 @@ namespace gemini.Repositories
         {
             var currency = await _context.Currencies
                 .AsNoTracking()
-                .SingleOrDefaultAsync(c => c.Code == code.ToString());
+                .SingleOrDefaultAsync(c => c.Code == code);
 
             if (currency is null) return null;
 

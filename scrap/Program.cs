@@ -41,14 +41,14 @@ builder.Services.AddScoped<MadProvider>();
 builder.Services.AddScoped<ICurrencyProvider>(sp =>
     sp.GetRequiredService<MadProvider>());
 
-builder.Services.AddScoped<IExchangeRateScraper>(sp =>
-    new ExchangeRateScraper(
-        sp.GetRequiredService<MadProvider>(),
-        sp.GetRequiredService<ICurrencyRepository>(),
-        sp.GetRequiredService<IExchangeRateRepository>(),
-        sp.GetRequiredService<ILogger<ExchangeRateScraper>>()
-    )
-);
+// builder.Services.AddScoped<IExchangeRateScraper>(sp =>
+//     new ExchangeRateScraper(
+//         sp.GetRequiredService<MadProvider>(),
+//         sp.GetRequiredService<ICurrencyRepository>(),
+//         sp.GetRequiredService<IExchangeRateRepository>(),
+//         sp.GetRequiredService<ILogger<ExchangeRateScraper>>()
+//     )
+// );
 
 /** 
 * register XOF
@@ -61,13 +61,14 @@ builder.Services.AddScoped<XofProvider>();
 builder.Services.AddScoped<ICurrencyProvider>(sp =>
     sp.GetRequiredService<XofProvider>());
 
-// builder.Services.AddScoped<IExchangeRateScraper>(sp =>
-//     new ExchangeRateScraper(
-//         sp.GetRequiredService<XofProvider>(),
-//         sp.GetRequiredService<ICurrencyRepository>(),
-//         sp.GetRequiredService<IExchangeRateRepository>()
-//     )
-// );
+builder.Services.AddScoped<IExchangeRateScraper>(sp =>
+    new ExchangeRateScraper(
+        sp.GetRequiredService<XofProvider>(),
+        sp.GetRequiredService<ICurrencyRepository>(),
+        sp.GetRequiredService<IExchangeRateRepository>(),
+        sp.GetRequiredService<ILogger<ExchangeRateScraper>>()
+    )
+);
 
 // Database
 builder.Services.AddDbContext<ApplicationDBContext>(options =>
@@ -88,6 +89,6 @@ var scrapers = scope.ServiceProvider.GetServices<IExchangeRateScraper>();
 foreach (var scraper in scrapers)
 {
     // await scraper.ScrapeDateRange(new DateOnly(2020, 1, 1), DateOnly.FromDateTime(DateTime.Today), 2);
-    await scraper.ScrapeDateRange(new DateOnly(2020, 1, 1), new DateOnly(2020, 1, 5), 2);
+    await scraper.ScrapeDateRange(new DateOnly(2020, 1, 1), new DateOnly(2020, 1, 5), 6);
     // await scraper.ScrapeLastDays(3);
 }

@@ -5,6 +5,6 @@ namespace gemini.Services
 {
     public interface IParserService
     {
-        ExchangeRateRaw? Parse(HtmlDocument doc);
+        public List<ExchangeRateRaw>? Parse(HtmlDocument doc);
     }
 }

@@ -1,5 +1,6 @@
 scrap/bin/
 scrap/obj/
+scrap/logs/
 scrap/obj/Debug/
 bin/
 obj/

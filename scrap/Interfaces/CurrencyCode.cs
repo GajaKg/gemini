@@ -4,6 +4,7 @@ namespace gemini.Interfaces
     {
         XOF,
         MAD,
-        EUR
+        EUR,
+        USD
     }
 }

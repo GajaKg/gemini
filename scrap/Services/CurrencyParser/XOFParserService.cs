@@ -15,7 +15,7 @@ namespace gemini.Services.CurrencyParser
             _logger = logger;
         }
 
-        public ExchangeRateRaw? Parse(HtmlDocument doc)
+        public List<ExchangeRateRaw>? Parse(HtmlDocument doc)
         {
             var rows = doc.DocumentNode.SelectNodes("//table/tbody/tr");
 
@@ -25,42 +25,67 @@ namespace gemini.Services.CurrencyParser
                 return null;
             }
 
+            List<ExchangeRateRaw> ratesList = [];
+
             foreach (var row in rows.Skip(1))
             {
                 var cells = row.SelectNodes("./td");
-                string currency = cells[0].InnerText.Trim();
-
-                if (currency != CurrencyNames.EUR) return null;
-
-                string? purchaseValue = HtmlEntity.DeEntitize(
-                    cells[1].InnerText.Trim() ?? ""
-                ).Trim();
-
-                string? sellValue = HtmlEntity.DeEntitize(
-                    cells[2].InnerText.Trim() ?? ""
-                ).Trim();
-
-                if (!decimal.TryParse(purchaseValue, NumberStyles.Number, CultureInfo.GetCultureInfo("fr-FR"), out decimal purchase))
+                // CurrencyCode currency = cells[0].InnerText.Trim();
+                if (!Enum.TryParse<CurrencyCode>(
+                    cells[0].InnerText.Trim(),
+                    ignoreCase: true,
+                    out var currency))
                 {
-                    _logger.LogWarning("⚠️  Invalid purchase value: {PurchaseValue}", purchaseValue);
-                    return null;
+                    // _logger.LogWarning("Skip currency: {Currency}", cells[0].InnerText);
+                    continue;
                 }
 
-                if (!decimal.TryParse(sellValue, NumberStyles.Number, CultureInfo.GetCultureInfo("fr-FR"), out decimal sell))
+
+                if (currency != CurrencyNames.EUR
+                    && currency != CurrencyNames.USD) continue;
+
+                decimal? purchase = ExtractNormalizeValue(cells[1].InnerText);
+                if (purchase is null)
                 {
-                    _logger.LogWarning("⚠️  Invalid sell value: {SellValue}", sellValue);
-                    return null;
+                    _logger.LogWarning("⚠️  Invalid purchase value: {Purchase}", purchase);
+                    continue;
                 }
 
-                decimal middleCourse = (purchase + sell) / 2;
-                return new ExchangeRateRaw
+                decimal? sell = ExtractNormalizeValue(cells[2].InnerText);
+                if (sell is null)
                 {
-                    Sell = sell,
-                    Buy = purchase,
-                    Middle = middleCourse,
-                };
+                    _logger.LogWarning("⚠️  Invalid sell value: {Sell}", sell);
+                    continue;
+                }
+
+                decimal middleCourse = (purchase.Value + sell.Value) / 2;
+
+                ratesList.Add(
+                    new ExchangeRateRaw
+                    {
+                        Sell = sell.Value,
+                        Buy = purchase.Value,
+                        Middle = middleCourse,
+                        TargetCurrency = currency
+                    }
+                );
             }
-            return null;
+
+            return ratesList;
+        }
+
+        private static decimal? ExtractNormalizeValue(string value)
+        {
+            string? normalizedValue = HtmlEntity.DeEntitize(
+                value.Trim() ?? ""
+            ).Trim();
+
+            if (!decimal.TryParse(normalizedValue, NumberStyles.Number, CultureInfo.GetCultureInfo("fr-FR"), out decimal parsedValue))
+            {
+                return null;
+            }
+
+            return parsedValue;
         }
     }
 }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using gemini.Data;
@@ -11,9 +12,11 @@ using gemini.Data;
 namespace gemini.Data.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260802135752_AddsTargetCurrency")]
+    partial class AddsTargetCurrency
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -40,9 +43,6 @@ namespace gemini.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code")
-                        .IsUnique();
-
                     b.ToTable("Currencies");
 
                     b.HasData(
@@ -68,7 +68,7 @@ namespace gemini.Data.Migrations
                         {
                             Id = 4,
                             Code = "USD",
-                            Name = "Dollar"
+                            Name = "Euro"
                         });
                 });
 
@@ -100,9 +100,7 @@ namespace gemini.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TargetCurrencyId");
-
-                    b.HasIndex("CurrencyId", "TargetCurrencyId", "Date")
+                    b.HasIndex("CurrencyId", "Date")
                         .IsUnique();
 
                     b.ToTable("ExchangeRates");
@@ -116,15 +114,7 @@ namespace gemini.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("gemini.Models.Currency", "TargetCurrency")
-                        .WithMany()
-                        .HasForeignKey("TargetCurrencyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Currency");
-
-                    b.Navigation("TargetCurrency");
                 });
 
             modelBuilder.Entity("gemini.Models.Currency", b =>

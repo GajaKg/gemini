@@ -1,4 +1,5 @@
 
+using gemini.Interfaces;
 using gemini.Models;
 using gemini.Repositories;
 using gemini.Services.CurrencyProviders;
@@ -49,10 +50,16 @@ namespace gemini.Services
             CancellationToken cancellationToken = default
         )
         {
+            var euro = await _currencyRepository.GetCurrencyByCode(CurrencyCode.EUR);
+            var usd = await _currencyRepository.GetCurrencyByCode(CurrencyCode.USD);
+
+            var targetCurrencies = new Dictionary<CurrencyCode, Currency>();
+            if (euro is not null) targetCurrencies.Add(CurrencyNames.EUR, euro);
+            if (usd is not null) targetCurrencies.Add(CurrencyNames.USD, usd);
+
             var currency = await _currencyRepository.GetCurrencyByCode(_currencyProvider.CurrencyCode);
             if (currency is null)
             {
-                // Console.WriteLine("❌ There is no currency " + _currencyProvider.CurrencyCode);
                 _logger.LogError("❌ There is no currency {CurrencyCode}", _currencyProvider.CurrencyCode);
                 return;
             }
@@ -73,26 +80,48 @@ namespace gemini.Services
 
                 try
                 {
-                    var exchangeRateRaw = await _currencyProvider.GetExchangeRate(date, cancellationToken);
+                    var exchangeRatesRaw = await _currencyProvider.GetExchangeRate(date, cancellationToken);
 
-                    if (exchangeRateRaw is null)
+                    if (exchangeRatesRaw is null || exchangeRatesRaw.Count < 1)
                     {
                         _logger.LogWarning("---- Missing date: {Date:d}", date);
                         continue;
                     }
 
-                    var exchangeRateParsed = new ExchangeRate
+                    foreach (var rawCurrency in exchangeRatesRaw)
                     {
-                        CurrencyId = currency.Id,
-                        Sell = exchangeRateRaw.Sell,
-                        Buy = exchangeRateRaw.Buy,
-                        Middle = exchangeRateRaw.Middle,
-                        Date = date
-                    };
+                        if (!targetCurrencies.TryGetValue(
+                                rawCurrency.TargetCurrency,
+                                out var targetCurrency))
+                        {
+                            _logger.LogWarning(
+                                "⚠️  Currency {Currency} is not configured",
+                                rawCurrency.TargetCurrency
+                            );
 
-                    bulkValues.Add(exchangeRateParsed);
+                            continue;
+                        }
 
-                    _logger.LogInformation("🗂  Got currency: {ExchangeRateParsed} for date {Date}, adding for bulk save.", exchangeRateParsed.DetailInfo(), date);
+                        var exchangeRateParsed = new ExchangeRate
+                        {
+                            TargetCurrencyId = targetCurrency.Id,
+                            CurrencyId = currency.Id,
+                            Sell = rawCurrency.Sell,
+                            Buy = rawCurrency.Buy,
+                            Middle = rawCurrency.Middle,
+                            Date = date
+                        };
+
+                        bulkValues.Add(exchangeRateParsed);
+
+                        _logger.LogInformation("🗂  Got rates({TargetCurrency} to {Currency}): {ExchangeRateParsed} on date {Date}, adding for bulk save.",
+                            targetCurrency.Name,
+                            currency.Code,
+                            exchangeRateParsed.DetailInfo(),
+                            date
+                        );
+                    }
+
                 }
                 catch (Exception ex)
                 {
@@ -113,7 +142,6 @@ namespace gemini.Services
                         existingExchangeDates.Add(item.Date);
                     }
 
-                    // Console.WriteLine($"✅ {bulkValues.Count} Rates are saved in db!!!!!");
                     _logger.LogInformation("✅ {Count} Rates are saved in db!!!!!", bulkValues.Count);
                     bulkValues.Clear();
                 }
