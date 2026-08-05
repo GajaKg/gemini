@@ -14,10 +14,10 @@ namespace gemini.Services.CurrencyProviders
 
         private const string baseUrl = "https://www.bceao.int/en/cours/get_all_devise_by_date";
 
-        private readonly ISeleniumProvider _driverProvider;
+        private readonly IHttpClientProvider _driverProvider;
         private readonly XOFParserService _parserService;
 
-        public XofProvider(ISeleniumProvider driverProvider, XOFParserService parserService, ILogger<XofProvider> logger)
+        public XofProvider(IHttpClientProvider driverProvider, XOFParserService parserService, ILogger<XofProvider> logger)
         {
             _driverProvider = driverProvider;
             _parserService = parserService;

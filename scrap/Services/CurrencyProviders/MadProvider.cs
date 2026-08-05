@@ -3,6 +3,7 @@ using gemini.Models;
 using gemini.Services.CurrencyParser;
 using gemini.Services.HtmlProviders;
 using HtmlAgilityPack;
+using OpenQA.Selenium;
 
 namespace gemini.Services.CurrencyProviders
 {
@@ -30,12 +31,16 @@ namespace gemini.Services.CurrencyProviders
             string urlByDay = $"{baseUrl}?date={date.Day}%2F{date.Month}%2F{date.Year}&block=d1f170603d8b478a6a7b3447ae7f68f3#address-c2e03d492b315ebd7817808fde6acc08-d1f170603d8b478a6a7b3447ae7f68f3";
 
             // get html
-            HtmlDocument? doc = await _driverProvider.GetHtml(urlByDay, cancellationToken);
+            HtmlDocument? doc = await _driverProvider.GetHtml(
+                urlByDay,
+                By.CssSelector(".object_name"),
+                cancellationToken
+            );
+            
             if (doc is null) return null;
 
             // extracting data from html
-            return [];
-            // return _parserService.Parse(doc);
+            return _parserService.Parse(doc);
         }
     }
 }

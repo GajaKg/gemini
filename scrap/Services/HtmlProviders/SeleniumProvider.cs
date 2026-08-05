@@ -1,6 +1,7 @@
 
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using SeleniumUndetectedChromeDriver;
@@ -16,14 +17,33 @@ namespace gemini.Services.HtmlProviders
             _logger = logger;
         }
 
-        public async Task<HtmlDocument?> GetHtml(string url, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Navigates to given url and downloading page html
+        /// </summary>
+        /// <param name="url">Page url</param>
+        /// <param name="waitElements">
+        /// If needed we can await for specific elements to appear
+        /// By.CssSelector(".object_name")
+        /// </param>
+        /// <returns>HtmlDocument</returns>
+        public async Task<HtmlDocument?> GetHtml(
+            string url,
+            By? waitElements,
+            CancellationToken cancellationToken = default)
         {
             try
             {
                 var driver = await CreateDriver();
 
                 await driver.Navigate().GoToUrlAsync(url);
-                WebDriverWait wait = new(driver, TimeSpan.FromSeconds(2));
+
+                // waiting for specific html element to appear on page
+                if (waitElements is not null)
+                {
+                    WebDriverWait wait = new(driver, TimeSpan.FromSeconds(7));
+                    wait.Until(d =>
+                        d.FindElements(waitElements).Count > 0);
+                }
 
                 if (driver.ExecuteScript("return document.documentElement.outerHTML;") is not string html) return null;
 
@@ -32,16 +52,46 @@ namespace gemini.Services.HtmlProviders
 
                 return doc;
             }
-            catch (HttpRequestException ex)
+            catch (WebDriverTimeoutException e)
             {
-                _logger.LogError(ex, "❌ Failed request");
+                _logger.LogWarning(
+                    e,
+                    "⏱️  Timeout waiting for element {Element} on {Url}",
+                    waitElements,
+                    url);
+
+                return null;
+            }
+            catch (NoSuchElementException ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "🔍  Element {Element} not found on {Url}",
+                    waitElements,
+                    url);
+
+                return null;
+            }
+            catch (WebDriverException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "🚨  Selenium error while scraping {Url}",
+                    url);
+
                 return null;
             }
 
         }
 
+        public Task<HtmlDocument?> GetHtml(
+            string url,
+            CancellationToken cancellationToken = default)
+        {
+            return GetHtml(url, null, cancellationToken);
+        }
 
-        private async Task<UndetectedChromeDriver> CreateDriver()
+        private static async Task<UndetectedChromeDriver> CreateDriver()
         {
             var chromeOptions = new ChromeOptions();
             chromeOptions.AddArguments("--headless=new");

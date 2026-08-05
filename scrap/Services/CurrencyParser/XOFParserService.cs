@@ -1,7 +1,7 @@
 
-using System.Globalization;
 using gemini.Interfaces;
 using gemini.Models;
+using gemini.Utilities;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 
@@ -44,14 +44,14 @@ namespace gemini.Services.CurrencyParser
                 if (currency != CurrencyNames.EUR
                     && currency != CurrencyNames.USD) continue;
 
-                decimal? purchase = ExtractNormalizeValue(cells[1].InnerText);
+                decimal? purchase = CurrencyNormalize.ExtractNormalizeValueCultureFr(cells[1].InnerText);
                 if (purchase is null)
                 {
                     _logger.LogWarning("⚠️  Invalid purchase value: {Purchase}", purchase);
                     continue;
                 }
 
-                decimal? sell = ExtractNormalizeValue(cells[2].InnerText);
+                decimal? sell = CurrencyNormalize.ExtractNormalizeValueCultureFr(cells[2].InnerText);
                 if (sell is null)
                 {
                     _logger.LogWarning("⚠️  Invalid sell value: {Sell}", sell);
@@ -72,20 +72,6 @@ namespace gemini.Services.CurrencyParser
             }
 
             return ratesList;
-        }
-
-        private static decimal? ExtractNormalizeValue(string value)
-        {
-            string? normalizedValue = HtmlEntity.DeEntitize(
-                value.Trim() ?? ""
-            ).Trim();
-
-            if (!decimal.TryParse(normalizedValue, NumberStyles.Number, CultureInfo.GetCultureInfo("fr-FR"), out decimal parsedValue))
-            {
-                return null;
-            }
-
-            return parsedValue;
         }
     }
 }

@@ -1,5 +1,7 @@
-using System.Globalization;
+using System.Text.RegularExpressions;
+using gemini.Interfaces;
 using gemini.Models;
+using gemini.Utilities;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 
@@ -8,60 +10,71 @@ namespace gemini.Services.CurrencyParser
     public class MADParserService : IParserService
     {
         private readonly ILogger<MADParserService> _logger;
-        
+
         public MADParserService(ILogger<MADParserService> logger)
         {
             _logger = logger;
-            
+
         }
-        List<ExchangeRateRaw>? IParserService.Parse(HtmlDocument doc)
+        public List<ExchangeRateRaw>? Parse(HtmlDocument doc)
         {
+            var rows = doc.DocumentNode.SelectNodes("//tbody/tr");
 
-            var row = doc.DocumentNode.SelectSingleNode("//tbody/tr[1]");
-            // IWebElement row = doc.FindElement(By.CssSelector("tbody > tr:first-child"));
-
-            if (row is null) 
+            if (rows is null)
             {
                 _logger.LogWarning("⚠️  Missing currency or please check page for html changes.");
                 return null;
-            };
-
-            string? currency = row.SelectSingleNode("./td[1]")?.InnerText.Trim();
-            string? purchaseValue = HtmlEntity.DeEntitize(
-                row.SelectSingleNode("./td[2]//span[@class='number']")?.InnerText ?? ""
-            ).Trim();
-
-            string? sellValue = HtmlEntity.DeEntitize(
-                row.SelectSingleNode("./td[3]//span[@class='number']")?.InnerText ?? ""
-            ).Trim();
-
-            if (
-                currency == "1 EURO" &&
-                purchaseValue != null &&
-                sellValue != null
-            )
-            {
-                if (!decimal.TryParse(purchaseValue, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal purchase))
-                {
-                    _logger.LogError("⚠️  Invalid purchase value: {PurchaseValue}", purchaseValue);
-                    return null;
-                }
-
-                if (!decimal.TryParse(sellValue, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal sell))
-                {
-                    _logger.LogError("⚠️  Invalid sell value: {SellValue}", sellValue);
-                    return null;
-                }
-
-                decimal middleCourse = (purchase + sell) / 2;
-return [];
-                // return new ExchangeRateRaw
-                // {
-                //     Sell = sell,
-                //     Buy = purchase,
-                //     Middle = middleCourse,
-                // };
             }
+
+            List<ExchangeRateRaw> ratesList = [];
+
+            foreach (var row in rows)
+            {
+                string? currency = row.SelectSingleNode("./td[1]")?.InnerText.Trim();
+                CurrencyCode? currencyCode = ParseCurrencyCode(currency ?? "");
+
+                if (currencyCode != CurrencyNames.EUR
+                    && currencyCode != CurrencyNames.USD) continue;
+
+                decimal? purchase = CurrencyNormalize.ExtractNormalizeValueCultureUs(row.SelectSingleNode("./td[2]//span[@class='number']").InnerText);
+                if (purchase is null)
+                {
+                    _logger.LogWarning("⚠️  Invalid purchase value: {Purchase}", purchase);
+                    continue;
+                }
+
+                decimal? sell = CurrencyNormalize.ExtractNormalizeValueCultureUs(row.SelectSingleNode("./td[2]//span[@class='number']").InnerText);
+                if (sell is null)
+                {
+                    _logger.LogWarning("⚠️  Invalid sell value: {Sell}", sell);
+                    continue;
+                }
+
+                decimal middleCourse = (purchase.Value + sell.Value) / 2;
+                ratesList.Add(
+                    new ExchangeRateRaw
+                    {
+                        Sell = sell.Value,
+                        Buy = purchase.Value,
+                        Middle = middleCourse,
+                        TargetCurrency = currencyCode.Value
+                    }
+                );
+            }
+
+            return ratesList;
+        }
+
+        private static CurrencyCode? ParseCurrencyCode(string value)
+        {
+            value = value.ToUpperInvariant();
+
+            if (Regex.IsMatch(value, @"\bEURO\b"))
+                return CurrencyCode.EUR;
+
+            if (Regex.IsMatch(value, @"\bUS\s+DOLLAR\b"))
+                return CurrencyCode.USD;
+
             return null;
         }
 
