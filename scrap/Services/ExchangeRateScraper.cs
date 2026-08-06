@@ -28,22 +28,31 @@ namespace gemini.Services
             _logger = logger;
         }
 
+        /// <summary>
+        /// Scrape from date to date
+        /// </summary>
+        /// <param name="bulkSaveNumber">Save rates in database after {bulkSaveNumber} rates.</param>
         public async Task ScrapeDateRange(DateOnly start, DateOnly end, int? bulkSaveNumber = 10, CancellationToken cancellationToken = default)
         {
-            int bulkSize = bulkSaveNumber ?? 10;
-            await Scrape(start, end, bulkSize, cancellationToken);
-
+            await Scrape(start, end, bulkSaveNumber, cancellationToken);
         }
 
+        /// <summary>
+        /// Scrape from date to date
+        /// </summary>
+        /// <param name="lastDays">Scrape eg last 7 days rates from today.</param>
+        /// <param name="bulkSaveNumber">Save rates in database after {bulkSaveNumber} rates.</param>
         public async Task ScrapeLastDays(int lastDays, int? bulkSaveNumber = 5, CancellationToken cancellationToken = default)
         {
-            int bulkSize = bulkSaveNumber ?? 5;
             DateOnly end = DateOnly.FromDateTime(DateTime.Today);
             DateOnly start = end.AddDays(-(lastDays - 1));
 
-            await Scrape(start, end, bulkSize, cancellationToken);
+            await Scrape(start, end, bulkSaveNumber, cancellationToken);
         }
 
+        /// <summary>
+        /// main scraper
+        /// </summary>
         public async Task Scrape(
             DateOnly start,
             DateOnly end,
@@ -51,10 +60,12 @@ namespace gemini.Services
             CancellationToken cancellationToken = default
         )
         {
-            var context = await InitializeScrapeContext();
-
+            var context = await InitializeScrapeContext(cancellationToken);
             if (context is null) return;
 
+            // currency (XOF, MAD...)
+            // targetCurrencies (USD, EUR...)
+            // 
             var (currency, targetCurrencies, existingExchanges) = context.Value;
 
             _logger.LogInformation("⏳ ⏳ ⏳ {CUrrencyCode} Scraping Started ⏳ ⏳ ⏳", _currencyProvider.CurrencyCode);
@@ -69,74 +80,30 @@ namespace gemini.Services
 
                     if (exchangeRatesRaw is null || exchangeRatesRaw.Count < 1)
                     {
+                        _logger.LogWarning("No Currency {Currency}", currency.Code);
                         _logger.LogWarning("---- Missing date: {Date:d}", date);
                         continue;
                     }
 
-                    foreach (var rawCurrency in exchangeRatesRaw)
-                    {
-
-                        if (!targetCurrencies.TryGetValue(
-                                rawCurrency.TargetCurrency,
-                                out var targetCurrency))
-                        {
-                            _logger.LogWarning(
-                                "⚠️  Currency {Currency} is not configured",
-                                rawCurrency.TargetCurrency
-                            );
-
-                            continue;
-                        }
-
-                        var newRate = new ExchangeRateLookup
-                        {
-                            Date = date,
-                            TargetCurrencyId = targetCurrency.Id
-                        };
-
-                        if (existingExchanges.Contains(newRate))
-                        {
-                            _logger.LogWarning(
-                                "❌ Exchange rate ({From} to {To}) for a date {Date} already exists!",
-                                targetCurrency.Name,
-                                currency.Name,
-                                date
-                            );
-                            continue;
-                        }
-
-                        // @TODO create mapper
-                        var exchangeRateParsed = new ExchangeRate
-                        {
-                            TargetCurrencyId = targetCurrency.Id,
-                            CurrencyId = currency.Id,
-                            Sell = rawCurrency.Sell,
-                            Buy = rawCurrency.Buy,
-                            Middle = rawCurrency.Middle,
-                            Date = date
-                        };
-
-                        bulkValues.Add(exchangeRateParsed);
-
-                        _logger.LogInformation("✅🗂  Got rates({TargetCurrency} to {Currency}): {ExchangeRateParsed} on date {Date}, adding for bulk save.",
-                            targetCurrency.Code,
-                            currency.Code,
-                            exchangeRateParsed.DetailInfo(),
-                            date
-                        );
-                    }
-
+                    ProccessCurrencies(
+                        exchangeRatesRaw,
+                        targetCurrencies,
+                        existingExchanges,
+                        currency,
+                        bulkValues,
+                        date
+                    );
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "❌ Failed {date}", date);
                 }
 
-                // if criteria is not met then dont save exchange rates
+                // if criteria is not met then dont save rates
                 if (bulkValues.Count < bulkSaveNumber) continue;
 
                 await SaveBulkValuesAsync(bulkValues, existingExchanges);
-               
+
                 Console.WriteLine("-----------------------------------------------------------");
             }
 
@@ -145,27 +112,37 @@ namespace gemini.Services
             _logger.LogInformation("🟢 {Code} Scraping Completed ⌛️", currency.Code);
         }
 
+        /// <summary>
+        /// Get all currencies and saved exchange rates
+        /// </summary>
         private async Task<(
             Currency SourceCurrency,
             Dictionary<CurrencyCode, Currency> TargetCurrencies,
             HashSet<ExchangeRateLookup> ExistingRates
-        )?> InitializeScrapeContext()
+        )?> InitializeScrapeContext(CancellationToken cancellationToken)
         {
-            var euro = await _currencyRepository.GetCurrencyByCode(CurrencyCode.EUR);
-            var usd = await _currencyRepository.GetCurrencyByCode(CurrencyCode.USD);
+            var currencies = await _currencyRepository.GetAllAsync(cancellationToken);
 
-            var targetCurrencies = new Dictionary<CurrencyCode, Currency>();
-            if (euro is not null) targetCurrencies.Add(CurrencyNames.EUR, euro);
-            if (usd is not null) targetCurrencies.Add(CurrencyNames.USD, usd);
-
-            var currency = await _currencyRepository.GetCurrencyByCode(_currencyProvider.CurrencyCode);
+            // Check if MAD and XOF exists in db
+            var currency = currencies.SingleOrDefault(c => c.Code == _currencyProvider.CurrencyCode);
             if (currency is null)
             {
                 _logger.LogError("❌ There is no currency {CurrencyCode}", _currencyProvider.CurrencyCode);
                 return null;
             }
 
-            HashSet<ExchangeRateLookup> existingExchanges = (await _exchangeRateRepository.GetAllCurrencyDatesAsync(currency.Id)).ToHashSet();
+            var targetCurrencies = new Dictionary<CurrencyCode, Currency>();
+
+            var euro = currencies.SingleOrDefault(c => c.Code == CurrencyCode.EUR);
+            var usd = currencies.SingleOrDefault(c => c.Code == CurrencyCode.USD);
+            if (euro is not null) targetCurrencies.Add(CurrencyNames.EUR, euro);
+            if (usd is not null) targetCurrencies.Add(CurrencyNames.USD, usd);
+
+            // get all rates for given currency (MAD, XOF) 
+            // to avoid duplicate entries
+            HashSet<ExchangeRateLookup> existingExchanges = (
+                await _exchangeRateRepository.GetAllRatesDatesAsync(currency.Id)
+            ).ToHashSet();
 
             return (
                 currency,
@@ -173,6 +150,73 @@ namespace gemini.Services
                 existingExchanges
             );
 
+        }
+
+        /// <summary>
+        /// Proccess list of rates received from currencyProvider
+        /// </summary>
+        private void ProccessCurrencies(
+            List<ExchangeRateRaw> exchangeRatesRaw,
+            Dictionary<CurrencyCode, Currency> targetCurrencies,
+            HashSet<ExchangeRateLookup> existingExchanges,
+            Currency currency,
+            List<ExchangeRate> bulkValues,
+            DateOnly date)
+        {
+            foreach (var rawCurrency in exchangeRatesRaw)
+            {
+                // check for EUR and USD
+                if (!targetCurrencies.TryGetValue(
+                        rawCurrency.TargetCurrency,
+                        out var targetCurrency))
+                {
+                    _logger.LogWarning(
+                        "⚠️  Currency {Currency} is not configured",
+                        rawCurrency.TargetCurrency
+                    );
+
+                    continue;
+                }
+
+                // create object for existing rate lookup
+                // check for date and targetCurrency.id (USD, EUR... id)
+                var newRate = new ExchangeRateLookup
+                {
+                    Date = date,
+                    TargetCurrencyId = targetCurrency.Id
+                };
+
+                if (existingExchanges.Contains(newRate))
+                {
+                    _logger.LogWarning(
+                        "❌ Exchange rate ({From} to {To}) for a date {Date} already exists!",
+                        targetCurrency.Name,
+                        currency.Code,
+                        date
+                    );
+                    continue;
+                }
+
+                // create rate model
+                var exchangeRateParsed = new ExchangeRate
+                {
+                    TargetCurrencyId = targetCurrency.Id,
+                    CurrencyId = currency.Id,
+                    Sell = rawCurrency.Sell,
+                    Buy = rawCurrency.Buy,
+                    Middle = rawCurrency.Middle,
+                    Date = date
+                };
+
+                bulkValues.Add(exchangeRateParsed);
+
+                _logger.LogInformation("✅🗂  Got rates({TargetCurrency} to {Currency}): {ExchangeRateParsed} on date {Date}, adding for bulk save.",
+                    targetCurrency.Code,
+                    currency.Code,
+                    exchangeRateParsed.DetailInfo(),
+                    date
+                );
+            }
         }
 
         private async Task SaveBulkValuesAsync(
@@ -190,11 +234,13 @@ namespace gemini.Services
                 // update list of existing exchange rates
                 foreach (var item in bulkValues)
                 {
-                    existingExchanges.Add(new ExchangeRateLookup
-                    {
-                        Date = item.Date,
-                        TargetCurrencyId = item.TargetCurrencyId
-                    });
+                    existingExchanges.Add(
+                        new ExchangeRateLookup
+                        {
+                            Date = item.Date,
+                            TargetCurrencyId = item.TargetCurrencyId
+                        }
+                    );
                 }
 
                 _logger.LogInformation("✅ {Count} rates are saved in db!!!!!", bulkValues.Count);

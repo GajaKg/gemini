@@ -23,8 +23,23 @@ namespace gemini.Services.CurrencyProviders
             _parserService = parserService;
         }
 
+        // <h2>Exchange rates of friday 3 january 2020</h2>
+        // <table>
+        //   <tbody>
+        //     <tr> <th>Currency</th> <th>Purchase</th> <th>Sale</th> </tr>
+        //     <tr> <td>EUR</td>   <td>655,957</td>   <td>655,957</td></tr>
+        //     <tr> <td>USD</td>   <td>584,250</td>   <td>591,250</td> </tr>
+        //     <tr> <td>JPY</td>   <td>5,410</td>   <td>5,470</td> </tr>
+        //   </tbody>
+        // </table>
+
+        /// <summary>
+        /// Get exchange rates
+        /// </summary>
+        /// <param name="date">Used in url to get rates at date</param>
         public async Task<List<ExchangeRateRaw>?> GetExchangeRate(DateOnly date, CancellationToken cancellationToken = default)
         {
+            // Creates random delay to avoid scraping detection
             int delay = Random.Shared.Next(4000, 10001);
             await Task.Delay(delay, cancellationToken);
 
@@ -36,7 +51,7 @@ namespace gemini.Services.CurrencyProviders
                 By.CssSelector(".object_name"),
                 cancellationToken
             );
-            
+
             if (doc is null) return null;
 
             // extracting data from html

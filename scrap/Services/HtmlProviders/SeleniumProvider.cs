@@ -10,6 +10,7 @@ namespace gemini.Services.HtmlProviders
 {
     public class SeleniumProvider : ISeleniumProvider
     {
+        private UndetectedChromeDriver? _undetectedChromeDriver;
         private readonly ILogger<SeleniumProvider> _logger;
 
         public SeleniumProvider(ILogger<SeleniumProvider> logger)
@@ -33,7 +34,7 @@ namespace gemini.Services.HtmlProviders
         {
             try
             {
-                var driver = await CreateDriver();
+                var driver = await GetDriver();
 
                 await driver.Navigate().GoToUrlAsync(url);
 
@@ -89,6 +90,26 @@ namespace gemini.Services.HtmlProviders
             CancellationToken cancellationToken = default)
         {
             return GetHtml(url, null, cancellationToken);
+        }
+
+        private async Task<UndetectedChromeDriver> GetDriver()
+        {
+            if (_undetectedChromeDriver is not null)
+            {
+                return _undetectedChromeDriver;
+            }
+
+            _undetectedChromeDriver = await CreateDriver();
+            return _undetectedChromeDriver;
+        }
+
+        public async void Dispose()
+        {
+            if (_undetectedChromeDriver is not null)
+            {
+                _undetectedChromeDriver.Quit();
+                _undetectedChromeDriver.Dispose();
+            }
         }
 
         private static async Task<UndetectedChromeDriver> CreateDriver()

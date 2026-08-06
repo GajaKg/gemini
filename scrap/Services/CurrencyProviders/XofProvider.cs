@@ -23,8 +23,13 @@ namespace gemini.Services.CurrencyProviders
             _parserService = parserService;
         }
 
+        /// <summary>
+        /// Get exchange rates
+        /// </summary>
+        /// <param name="date">Used in url to get rates at date</param>
         public async Task<List<ExchangeRateRaw>?> GetExchangeRate(DateOnly date, CancellationToken cancellationToken = default)
         {
+            // Creates random delay to avoid scraping detection
             int delay = Random.Shared.Next(4000, 10001);
             await Task.Delay(delay, cancellationToken);
 

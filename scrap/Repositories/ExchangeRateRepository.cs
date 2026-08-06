@@ -21,7 +21,7 @@ namespace gemini.Repositories
             _context.ChangeTracker.Clear(); // free memory for next 10
         }
 
-        public async Task<IEnumerable<ExchangeRateLookup>> GetAllCurrencyDatesAsync(int currencyId)
+        public async Task<IEnumerable<ExchangeRateLookup>> GetAllRatesDatesAsync(int currencyId)
         {
             return await _context.ExchangeRates
                 .AsNoTracking()
@@ -29,7 +29,6 @@ namespace gemini.Repositories
                 .Select(e => new ExchangeRateLookup
                 {
                     Date = e.Date,
-                    // CurrencyId = e.CurrencyId,
                     TargetCurrencyId = e.TargetCurrencyId,
                 })
                 .ToListAsync();

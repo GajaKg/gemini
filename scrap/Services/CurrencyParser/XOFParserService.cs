@@ -15,8 +15,12 @@ namespace gemini.Services.CurrencyParser
             _logger = logger;
         }
 
+        /// <summary>
+        /// Extract data from html
+        /// </summary>
         public List<ExchangeRateRaw>? Parse(HtmlDocument doc)
         {
+            // <tr><td>EUR</td><td>655,957</td><td>655,957</td></tr>
             var rows = doc.DocumentNode.SelectNodes("//table/tbody/tr");
 
             if (rows is null)
@@ -30,7 +34,8 @@ namespace gemini.Services.CurrencyParser
             foreach (var row in rows.Skip(1))
             {
                 var cells = row.SelectNodes("./td");
-                // CurrencyCode currency = cells[0].InnerText.Trim();
+
+                // Parsing currency to CurrencyCode
                 if (!Enum.TryParse<CurrencyCode>(
                     cells[0].InnerText.Trim(),
                     ignoreCase: true,
@@ -40,10 +45,15 @@ namespace gemini.Services.CurrencyParser
                     continue;
                 }
 
-
+                // parse only EUR and USD
+                // for new currencies add here 
                 if (currency != CurrencyNames.EUR
                     && currency != CurrencyNames.USD) continue;
 
+                /**
+                * check if value exists and transform from 655,957 to 655.957
+                * <td>655,957</td>
+                */
                 decimal? purchase = CurrencyNormalize.ExtractNormalizeValueCultureFr(cells[1].InnerText);
                 if (purchase is null)
                 {

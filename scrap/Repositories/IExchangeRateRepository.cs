@@ -6,6 +6,6 @@ namespace gemini.Repositories
     public interface IExchangeRateRepository
     {
         Task BulkSaveAsync(List<ExchangeRate> items);
-        Task<IEnumerable<ExchangeRateLookup>> GetAllCurrencyDatesAsync(int currencyId);
+        Task<IEnumerable<ExchangeRateLookup>> GetAllRatesDatesAsync(int currencyId);
     }
 }

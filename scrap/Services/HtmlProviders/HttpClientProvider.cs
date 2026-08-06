@@ -15,6 +15,11 @@ namespace gemini.Services.HtmlProviders
             _logger = logger;
         }
 
+        /// <summary>
+        /// Navigates to given url and downloading page html
+        /// </summary>
+        /// <param name="url">Page url</param>
+        /// <returns>HtmlDocument</returns>
         public async Task<HtmlDocument?> GetHtml(string url, CancellationToken cancellationToken = default)
         {
             try
