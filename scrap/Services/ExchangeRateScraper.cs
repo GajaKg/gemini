@@ -15,6 +15,8 @@ namespace gemini.Services
         private readonly ICurrencyRepository _currencyRepository;
         private readonly IExchangeRateRepository _exchangeRateRepository;
 
+        private const int DefaultBulkSaveNumber = 10;
+
         public ExchangeRateScraper(
             ICurrencyProvider currencyProvider,
             ICurrencyRepository currencyRepository,
@@ -32,9 +34,13 @@ namespace gemini.Services
         /// Scrape from date to date
         /// </summary>
         /// <param name="bulkSaveNumber">Save rates in database after {bulkSaveNumber} rates.</param>
-        public async Task ScrapeDateRange(DateOnly start, DateOnly end, int? bulkSaveNumber = 10, CancellationToken cancellationToken = default)
+        public async Task ScrapeDateRange(DateOnly start, DateOnly end, int bulkSaveNumber, CancellationToken cancellationToken = default)
         {
             await Scrape(start, end, bulkSaveNumber, cancellationToken);
+        }
+        public async Task ScrapeDateRange(DateOnly start, DateOnly end, CancellationToken cancellationToken = default)
+        {
+            await Scrape(start, end, DefaultBulkSaveNumber, cancellationToken);
         }
 
         /// <summary>
@@ -42,12 +48,19 @@ namespace gemini.Services
         /// </summary>
         /// <param name="lastDays">Scrape eg last 7 days rates from today.</param>
         /// <param name="bulkSaveNumber">Save rates in database after {bulkSaveNumber} rates.</param>
-        public async Task ScrapeLastDays(int lastDays, int? bulkSaveNumber = 5, CancellationToken cancellationToken = default)
+        public async Task ScrapeLastDays(int lastDays, int bulkSaveNumber, CancellationToken cancellationToken = default)
         {
             DateOnly end = DateOnly.FromDateTime(DateTime.Today);
             DateOnly start = end.AddDays(-(lastDays - 1));
 
             await Scrape(start, end, bulkSaveNumber, cancellationToken);
+        }
+
+        public Task ScrapeLastDays(
+            int lastDays,
+            CancellationToken cancellationToken = default)
+        {
+            return ScrapeLastDays(lastDays, DefaultBulkSaveNumber, cancellationToken);
         }
 
         /// <summary>
@@ -56,7 +69,7 @@ namespace gemini.Services
         public async Task Scrape(
             DateOnly start,
             DateOnly end,
-            int? bulkSaveNumber = 10,
+            int bulkSaveNumber = 10,
             CancellationToken cancellationToken = default
         )
         {
@@ -251,5 +264,6 @@ namespace gemini.Services
                 _logger.LogError(e, "❌ Error saving exchange rates!");
             }
         }
+
     }
 }
