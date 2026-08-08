@@ -8,7 +8,7 @@ using SeleniumUndetectedChromeDriver;
 
 namespace gemini.Services.HtmlProviders
 {
-    public class SeleniumProvider : ISeleniumProvider
+    public class SeleniumProvider : ISeleniumProvider, IDisposable
     {
         private UndetectedChromeDriver? _undetectedChromeDriver;
         private readonly ILogger<SeleniumProvider> _logger;
@@ -34,10 +34,13 @@ namespace gemini.Services.HtmlProviders
         {
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var driver = await GetDriver();
 
                 await driver.Navigate().GoToUrlAsync(url);
 
+                cancellationToken.ThrowIfCancellationRequested();
                 // waiting for specific html element to appear on page
                 if (waitElements is not null)
                 {
@@ -103,12 +106,22 @@ namespace gemini.Services.HtmlProviders
             return _undetectedChromeDriver;
         }
 
-        public async void Dispose()
+        public void Dispose()
         {
-            if (_undetectedChromeDriver is not null)
+            if (_undetectedChromeDriver is null) return;
+
+            try
             {
                 _undetectedChromeDriver.Quit();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error closing Selenium driver");
+            }
+            finally
+            {
                 _undetectedChromeDriver.Dispose();
+                _undetectedChromeDriver = null;
             }
         }
 

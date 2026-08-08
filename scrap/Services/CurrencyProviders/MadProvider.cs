@@ -8,16 +8,16 @@ using OpenQA.Selenium;
 namespace gemini.Services.CurrencyProviders
 {
 
-    public class MadProvider : ICurrencyProvider
+    public class MadProvider : IMadCurrencyProvider
     {
         public CurrencyCode CurrencyCode => CurrencyCode.MAD;
 
         private const string baseUrl = "https://www.bkam.ma/en/Markets/Key-indicators/Foreign-exchange-market/Foreign-exchange-rates/Foreign-banknotes-exchange-rate";
 
         private readonly ISeleniumProvider _driverProvider;
-        private readonly MADParserService _parserService;
+        private readonly IMadParserService _parserService;
 
-        public MadProvider(ISeleniumProvider driverProvider, MADParserService parserService)
+        public MadProvider(ISeleniumProvider driverProvider, IMadParserService parserService)
         {
             _driverProvider = driverProvider;
             _parserService = parserService;

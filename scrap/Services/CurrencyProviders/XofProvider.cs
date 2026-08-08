@@ -8,16 +8,16 @@ using Microsoft.Extensions.Logging;
 namespace gemini.Services.CurrencyProviders
 {
 
-    public class XofProvider : ICurrencyProvider
+    public class XofProvider : IXofCurrencyProvider
     {
         public CurrencyCode CurrencyCode => CurrencyCode.XOF;
 
         private const string baseUrl = "https://www.bceao.int/en/cours/get_all_devise_by_date";
 
         private readonly IHttpClientProvider _driverProvider;
-        private readonly XOFParserService _parserService;
+        private readonly IXofParserService _parserService;
 
-        public XofProvider(IHttpClientProvider driverProvider, XOFParserService parserService, ILogger<XofProvider> logger)
+        public XofProvider(IHttpClientProvider driverProvider, IXofParserService parserService, ILogger<XofProvider> logger)
         {
             _driverProvider = driverProvider;
             _parserService = parserService;

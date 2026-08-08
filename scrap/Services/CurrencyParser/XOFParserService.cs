@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace gemini.Services.CurrencyParser
 {
-    public class XOFParserService : IParserService
+    public class XOFParserService : IXofParserService
     {
         private readonly ILogger<XOFParserService> _logger;
         public XOFParserService(ILogger<XOFParserService> logger)

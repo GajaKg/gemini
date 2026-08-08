@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace gemini.Services.CurrencyParser
 {
-    public class MADParserService : IParserService
+    public class MADParserService : IMadParserService
     {
         private readonly ILogger<MADParserService> _logger;
 

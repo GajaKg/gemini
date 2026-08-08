@@ -24,7 +24,7 @@ namespace gemini.Services.HtmlProviders
         {
             try
             {
-                string html = await _httpClient.GetStringAsync(url + "asd", cancellationToken);
+                string html = await _httpClient.GetStringAsync(url, cancellationToken);
 
                 var doc = new HtmlDocument();
                 doc.LoadHtml(html);
