@@ -41,12 +41,15 @@ public class ApplicationDBContext : DbContext
             .IsUnique();
 
         modelBuilder.Entity<Currency>()
+            .Property(c => c.Code)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<Currency>()
             .HasIndex(c => new
             {
                 c.Code,
             })
             .IsUnique();
-
 
         base.OnModelCreating(modelBuilder);
     }
