@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using gemini.Utilities;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
+using Scrap.Domain.Enums;
 using Scrap.Domain.Interfaces;
 using Scrap.Domain.Models;
 

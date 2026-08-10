@@ -5,6 +5,7 @@ using gemini.Repositories;
 using gemini.Services.CurrencyProviders;
 using Microsoft.Extensions.Logging;
 using Scrap.Domain.Interfaces;
+using Scrap.Domain.Enums;
 
 namespace gemini.Services;
 

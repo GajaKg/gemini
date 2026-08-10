@@ -26,7 +26,7 @@ namespace gemini.Data
             
             modelBuilder.Entity<ExchangeRate>()
                 .HasOne(e => e.TargetCurrency)
-                .WithMany()
+                .WithMany(c => c.TargetExchangeRates)
                 .HasForeignKey(e => e.TargetCurrencyId)
                 .OnDelete(DeleteBehavior.Restrict);
 

@@ -2,7 +2,7 @@
 
 using gemini.Data;
 using Microsoft.EntityFrameworkCore;
-using Scrap.Domain.Interfaces;
+using Scrap.Domain.Enums;
 using Scrap.Domain.Models;
 
 namespace gemini.Repositories

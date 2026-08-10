@@ -1,12 +1,11 @@
 using System.ComponentModel.DataAnnotations;
-using Scrap.Domain.Interfaces;
+using Scrap.Domain.Enums;
 
-namespace scrap.Dtos
+namespace gemini.Dtos;
+
+public class CurrencyRequest
 {
-    public class CurrencyRequest
-    {
-        [Required]
-        public CurrencyCode Code { get; set; }
-        public string Name { get; set; } = String.Empty;
-    }
+    [Required]
+    public CurrencyCode Code { get; set; }
+    public string Name { get; set; } = String.Empty;
 }
