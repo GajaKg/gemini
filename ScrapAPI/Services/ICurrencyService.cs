@@ -1,4 +1,3 @@
-using Scrap.Domain.Models;
 using ScrapAPI.Dto;
 
 namespace ScrapAPI.Services;

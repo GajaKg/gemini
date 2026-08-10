@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Scrap.Domain.Models;
 using ScrapAPI.Dto;
 using ScrapAPI.Services;
 
@@ -10,10 +9,10 @@ namespace ScrapAPI.Controllers
     public class CurrenciesController : ControllerBase
     {
         private readonly ICurrencyService _currencyService;
+
         public CurrenciesController(ICurrencyService currencyService)
         {
             _currencyService = currencyService;
-
         }
 
         [HttpGet]

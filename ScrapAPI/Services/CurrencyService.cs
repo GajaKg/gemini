@@ -1,4 +1,3 @@
-using Scrap.Domain.Models;
 using ScrapAPI.Dto;
 using ScrapAPI.Mappers;
 using ScrapAPI.Repositories;
@@ -34,16 +33,10 @@ namespace ScrapAPI.Services
                             TargetCurrency = er.TargetCurrency is null
                                 ? null
                                 : er.TargetCurrency!.ToCurrencyWithoutRatesDto(),
-                            // Currency = er.TargetCurrency is null
-                            //     ? null
-                            //     : er.Currency!.ToCurrencyWithoutRatesDto(),
                         })
                         .ToList()
                 })
                 .ToList();
-            // return currencies
-            //     .Select(c => c.ToCurrencyDto())
-            //     .ToList();
         }
         public async Task<IEnumerable<CurrencyDto>> GetAllTargetAsync()
         {
@@ -69,9 +62,6 @@ namespace ScrapAPI.Services
                         .ToList()
                 })
                 .ToList();
-            // return currencies
-            //     .Select(c => c.ToCurrencyDto())
-            //     .ToList();
         }
     }
 }

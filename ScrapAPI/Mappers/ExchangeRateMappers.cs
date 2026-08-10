@@ -15,9 +15,6 @@ public static class ExchangeRateMappers
             Middle = exchangeRate.Middle,
             Date = exchangeRate.Date,
             TargetCurrency = exchangeRate.TargetCurrency!.ToCurrencyWithoutRatesDto()
-            // TargetCurrency = exchangeRate.TargetCurrency!.Code,
-            // Currency = exchangeRate.Currency?.ToCurrencyDto(),
-            // TargetCurrency = exchangeRateDto.TargetCurrency,
         };
     }
 }
