@@ -1,16 +1,14 @@
+using Scrap.Domain.Interfaces;
+using Scrap.Domain.Models;
 
-using gemini.Interfaces;
-using gemini.Models;
+namespace gemini.Services.CurrencyProviders;
 
-namespace gemini.Services.CurrencyProviders
+public interface ICurrencyProvider
 {
-    public interface ICurrencyProvider
-    {
-        CurrencyCode CurrencyCode { get; }
-        Task<List<ExchangeRateRaw>?> GetExchangeRate(DateOnly date, CancellationToken cancellationToken = default);
-    }
-    
-    public interface IXofCurrencyProvider : ICurrencyProvider;
-
-    public interface IMadCurrencyProvider : ICurrencyProvider;
+    CurrencyCode CurrencyCode { get; }
+    Task<List<ExchangeRateRaw>?> GetExchangeRate(DateOnly date, CancellationToken cancellationToken = default);
 }
+
+public interface IXofCurrencyProvider : ICurrencyProvider;
+
+public interface IMadCurrencyProvider : ICurrencyProvider;

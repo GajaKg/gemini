@@ -1,9 +1,9 @@
 
-using gemini.Interfaces;
-using gemini.Models;
 using gemini.Utilities;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
+using Scrap.Domain.Interfaces;
+using Scrap.Domain.Models;
 
 namespace gemini.Services.CurrencyParser
 {

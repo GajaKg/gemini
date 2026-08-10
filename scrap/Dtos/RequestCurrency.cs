@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using gemini.Interfaces;
+using Scrap.Domain.Interfaces;
 
 namespace scrap.Dtos
 {

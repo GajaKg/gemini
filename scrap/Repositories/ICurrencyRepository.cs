@@ -1,6 +1,7 @@
 
-using gemini.Interfaces;
-using gemini.Models;
+
+using Scrap.Domain.Interfaces;
+using Scrap.Domain.Models;
 
 namespace gemini.Repositories
 {

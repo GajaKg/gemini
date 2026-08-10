@@ -1,5 +1,5 @@
 using gemini.Dtos;
-using gemini.Models;
+using Scrap.Domain.Models;
 
 namespace gemini.Repositories
 {

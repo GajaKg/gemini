@@ -13,7 +13,8 @@ RateLimiter
 Cancellation token - kada se i gde koristi
 Dokumentacija!!! - tehnicka i korisnicka!
 Summary za svaku metodu obavezno
-Koriscenje Interfejsa, naravno gde treba kao i dependency injection, code reuse i voditi racuna o tome sta ce se desiti kada se odredjeni deo koda promeni
+Koriscenje Interfejsa, naravno gde treba kao i dependency injection,
+code reuse i voditi racuna o tome sta ce se desiti kada se odredjeni deo koda promeni
     koliko ce uticati na druge delove koda - jedan od primera su prametri metode, koriscenje jedne klase za vise parametra daje prednost...
 Metode ne smeju imati puno koda - voditi racuna o single responsibility
 Ispratiti tok programa, ocekivati neocekivano
@@ -61,4 +62,5 @@ valuta za poredjenje: euro
 izlaz: 120 (markonaskih dinara je jedan euro)
 
 za pocetak Burkina Faso, Marocco u odnosu na euro
-raspitati se kako se beleze ti podaci, koja je referenca, koeficijent, mora da postoji neki centralni koeficijent, proveriti sa AI - chat gpt
+raspitati se kako se beleze ti podaci, koja je referenca, koeficijent,
+ mora da postoji neki centralni koeficijent, proveriti sa AI - chat gpt
