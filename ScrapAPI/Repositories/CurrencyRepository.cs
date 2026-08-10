@@ -17,16 +17,20 @@ public class CurrencyRepository : ICurrencyRepository
     {
         return await _context.Currencies
             .AsNoTracking()
-            .Include(c => c.ExchangeRates)
+            .Include(c => c.ExchangeRates
+                .OrderByDescending(er => er.Date)
+            )
                 .ThenInclude(er => er.TargetCurrency)
             .ToListAsync();
     }
-    
+
     public async Task<IReadOnlyList<Currency>> GetAllTargetAsync()
     {
         return await _context.Currencies
             .AsNoTracking()
-            .Include(c => c.TargetExchangeRates)
+            .Include(c => c.TargetExchangeRates
+                .OrderByDescending(er => er.Date)
+            )
                 .ThenInclude(er => er.Currency)
             .ToListAsync();
     }
