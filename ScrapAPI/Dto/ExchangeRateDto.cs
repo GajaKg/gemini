@@ -1,6 +1,4 @@
 
-using Scrap.Domain.Models;
-
 namespace ScrapAPI.Dto;
 
 public class ExchangeRateDto
@@ -10,6 +8,6 @@ public class ExchangeRateDto
     public decimal Buy { get; set; }
     public decimal Middle { get; set; }
     public DateOnly Date { set; get; }
-    public CurrencyWithoutRatesDto? TargetCurrency { get; set; }
+    // public CurrencyWithoutRatesDto? TargetCurrency { get; set; }
     public CurrencyWithoutRatesDto? Currency { get; set; }
 }
