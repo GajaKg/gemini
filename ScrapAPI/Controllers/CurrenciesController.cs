@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ScrapAPI.Dto;
+using ScrapAPI.Helpers;
 using ScrapAPI.Services;
 
 namespace ScrapAPI.Controllers
@@ -40,7 +41,7 @@ namespace ScrapAPI.Controllers
 
             return Ok(foundCurrency);
         }
- 
+
         [HttpGet]
         [Route("target/{id}")]
         public async Task<ActionResult<CurrencyDto>> GetByIdTarget([FromRoute] int id)
@@ -53,10 +54,10 @@ namespace ScrapAPI.Controllers
         }
 
         [HttpGet]
-        [Route("{id}/{rateCurrencyId}")]
-        public async Task<ActionResult<CurrencyDto>> GetByIdTarget([FromRoute] int id, [FromRoute] int rateCurrencyId)
+        [Route("list")]
+        public async Task<ActionResult<CurrencyDto>> GetByIdTarget([FromQuery] ExchangeRateQueryParams queryParams)
         {
-            var foundCurrency = await _currencyService.GetByIdAndRateCurrencyIdAsync(id, rateCurrencyId);
+            var foundCurrency = await _currencyService.GetByIdAndRateCurrencyIdAsync(queryParams.Id, queryParams.TargetCyrrencyId);
 
             if (foundCurrency is null) return NotFound();
 
