@@ -1,0 +1,49 @@
+@using ScrappyCoco.Services.Currencies;
+@using ScrappyCoco.Enums;
+@using MudBlazor.Services;
+
+@inject HttpClient Http;
+@inject ICurrenciesService _currenciesService;
+
+
+@if (CurrencyList is not null)
+{
+
+    @* <div class="d-flex gap-2"> *@
+    @foreach (var item in CurrencyList)
+    {
+        <MudButton Color="Color.Primary" Size="Size.Small" OnClick="@(() => CurrencyClick(item))"
+                   Variant="@(ActiveId == item.Id ? Variant.Filled : Variant.Outlined)">
+            @item.Code
+        </MudButton>
+    }
+    @* </div> *@
+}
+
+
+@code {
+@using Models;
+
+[Parameter]
+[EditorRequired]
+public List<Currency> CurrencyList { get; set; }
+
+[Parameter]
+public int ActiveId { get; set; }
+
+[Parameter]
+public EventCallback<Currency> OnCurrencyClick { get; set; }
+
+protected override async Task OnInitializedAsync()
+{
+
+}
+
+public async Task CurrencyClick(Currency item)
+{
+    await OnCurrencyClick.InvokeAsync(item);
+}
+
+
+
+}

@@ -1,0 +1,48 @@
+@inject HttpClient Http;
+
+<MudTable Items="@ExchangeRates" Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Info"
+          Loading="@IsLoading" Filter="new Func<ExchangeRate,bool>(FilterByDate)">
+    <ToolBarContent>
+        @* <MudText Typo="Typo.h6">Periodic Elements</MudText> *@
+        <MudSpacer />
+        <MudSpacer />
+        <MudDatePicker Label="Date" @bind-Date="date" Clearable="true" />
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Currency</MudTh>
+        <MudTh>Sell</MudTh>
+        <MudTh>Buyy</MudTh>
+        <MudTh>Middle</MudTh>
+        <MudTh>Date</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Currency">1 @context.Currency?.Name</MudTd>
+        <MudTd DataLabel="Buy">@context.Buy</MudTd>
+        <MudTd DataLabel="Sell">@context.Sell</MudTd>
+        <MudTd DataLabel="Middle">@context.Middle</MudTd>
+        <MudTd DataLabel="Date">@context.Date.ToShortDateString()</MudTd>
+    </RowTemplate>
+</MudTable>
+
+
+@code {
+@using Models;
+
+[Parameter]
+[EditorRequired]
+public List<ExchangeRate> ExchangeRates { get; set; } = [];
+
+[Parameter]
+public bool IsLoading { get; set; } = false;
+
+private DateTime? date;
+
+private bool FilterByDate(ExchangeRate rate)
+{
+    if (date is null)
+        return true;
+
+    return rate.Date == DateOnly.FromDateTime(date.Value);
+}
+
+}

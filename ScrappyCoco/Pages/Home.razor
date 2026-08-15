@@ -1,7 +1,136 @@
-﻿@page "/"
+﻿@page "/";
+@inject IJSRuntime JS
 
-<PageTitle>Home</PageTitle>
+@using ScrappyCoco.Components
+@using ScrappyCoco.Services.Currencies;
+@using ScrappyCoco.Enums;
+@using MudBlazor.Services;
 
-<h1>Hello, world!</h1>
+@inject HttpClient Http
+@inject ICurrenciesService _currenciesService
 
-Welcome to your new app.
+<PageTitle>Exchange Rates</PageTitle>
+<h1>Exchange Rates</h1>
+
+@if (initLoading)
+{
+    <p>Loading...</p>
+}
+else if (currency is null)
+{
+    <p>No rates</p>
+}
+else
+{
+    <p>Select rates</p>
+    @if (fromCurrencies is not null)
+    {
+        <p>From:</p>
+        <div class="d-flex gap-2">
+            <CurrencySelector CurrencyList="fromCurrencies" ActiveId="selectedFromCurrency!.Id"
+                              OnCurrencyClick="(item) => Exchange(CurrencySelectionType.From, item)" />
+        </div>
+    }
+
+    @if (toCurrencies is not null)
+    {
+        <p>To:</p>
+        <div class="d-flex gap-2">
+            <CurrencySelector CurrencyList="toCurrencies" ActiveId="selectedToCurrency!.Id"
+                              OnCurrencyClick="(item) => Exchange(CurrencySelectionType.To, item)" />
+        </div>
+    }
+
+    <h3>@currency?.Name</h3>
+    <p>1 @selectedFromCurrency?.Code to @selectedToCurrency?.Code </p>
+
+    @if (currency is not null)
+    {
+        <RatesTable ExchangeRates="currency.ExchangeRates" IsLoading="isLoading" />
+    }
+}
+
+@code {
+@using Models;
+
+    CurrencyCode[] fromCode = [CurrencyCode.XOF, CurrencyCode.MAD];
+CurrencyCode[] toCode = [CurrencyCode.EUR, CurrencyCode.USD];
+
+private Currency? currency;
+private List<Currency> fromCurrencies = [];
+private List<Currency> toCurrencies = [];
+private Currency? selectedFromCurrency;
+private Currency? selectedToCurrency;
+private bool isLoading = false;
+private bool initLoading = false;
+
+protected override async Task OnInitializedAsync()
+{
+    initLoading = true;
+
+    try
+    {
+        var currencies = await _currenciesService.GetAllCurrencies();
+
+        if (currencies is null)
+            return;
+
+        fromCurrencies = currencies
+            .Where(c => fromCode.Contains(c.Code))
+            .ToList();
+
+        toCurrencies = currencies
+            .Where(c => toCode.Contains(c.Code))
+            .ToList();
+
+        if (fromCurrencies.Count == 0 || toCurrencies.Count == 0)
+            return;
+
+        selectedFromCurrency = fromCurrencies.FirstOrDefault();
+        selectedToCurrency = toCurrencies.FirstOrDefault();
+
+        if (selectedFromCurrency is null || selectedToCurrency is null) return;
+
+        currency = await _currenciesService.GetCurrencyAndRatesByTargetId(selectedFromCurrency.Id, targetCurrencyId:
+    selectedToCurrency.Id);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex);
+    }
+    finally
+    {
+        initLoading = false;
+    }
+
+}
+
+private async Task Exchange(CurrencySelectionType selection, Currency selectedCurrency)
+{
+    if (selection == CurrencySelectionType.From)
+    {
+        selectedFromCurrency = selectedCurrency;
+    }
+    else
+    {
+        selectedToCurrency = selectedCurrency;
+    }
+
+    isLoading = true;
+
+    try
+    {
+        if (selectedFromCurrency is null || selectedToCurrency is null) return;
+        currency = await _currenciesService.GetCurrencyAndRatesByTargetId(selectedFromCurrency.Id, selectedToCurrency.Id);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex);
+    }
+    finally
+    {
+        isLoading = false;
+    }
+}
+
+}
