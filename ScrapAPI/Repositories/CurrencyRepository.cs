@@ -13,7 +13,7 @@ public class CurrencyRepository : ICurrencyRepository
         _context = dBContext;
     }
 
-    public async Task<IReadOnlyList<Currency>> GetAllAsync()
+    public async Task<IReadOnlyList<Currency>> GetAllAsync(CancellationToken cancellationToken)
     {
         return await _context.Currencies
             .AsNoTracking()
@@ -21,21 +21,10 @@ public class CurrencyRepository : ICurrencyRepository
                 .OrderByDescending(er => er.Date)
             )
                 .ThenInclude(er => er.TargetCurrency)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Currency>> GetAllTargetAsync()
-    {
-        return await _context.Currencies
-            .AsNoTracking()
-            .Include(c => c.TargetExchangeRates
-                .OrderByDescending(er => er.Date)
-            )
-                .ThenInclude(er => er.Currency)
-            .ToListAsync();
-    }
-
-    public async Task<Currency?> GetByIdAsync(int id)
+    public async Task<Currency?> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
         return await _context.Currencies
             .AsNoTracking()
@@ -43,21 +32,10 @@ public class CurrencyRepository : ICurrencyRepository
                 .OrderByDescending(er => er.Date)
             )
                 .ThenInclude(er => er.TargetCurrency)
-            .SingleOrDefaultAsync(c => c.Id == id);
+            .SingleOrDefaultAsync(c => c.Id == id, cancellationToken: cancellationToken);
     }
 
-    public async Task<Currency?> GetByIdTargetAsync(int id)
-    {
-        return await _context.Currencies
-            .AsNoTracking()
-            .Include(c => c.TargetExchangeRates
-                .OrderByDescending(er => er.Date)
-            )
-                .ThenInclude(er => er.Currency)
-            .SingleOrDefaultAsync(c => c.Id == id);
-    }
-
-    public async Task<Currency?> GetByIdAndRateCurrencyIdAsync(int id, int rateCurrencyId)
+    public async Task<Currency?> GetByIdAndRateCurrencyIdAsync(int id, int rateCurrencyId, CancellationToken cancellationToken)
     {
         return await _context.Currencies
             .AsNoTracking()
@@ -66,6 +44,6 @@ public class CurrencyRepository : ICurrencyRepository
                 .OrderByDescending(er => er.Date)
             )
                 .ThenInclude(er => er.TargetCurrency)
-            .SingleOrDefaultAsync(c => c.Id == id);
+            .SingleOrDefaultAsync(c => c.Id == id, cancellationToken: cancellationToken);
     }
 }

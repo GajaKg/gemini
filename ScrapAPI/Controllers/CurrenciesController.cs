@@ -17,36 +17,17 @@ namespace ScrapAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CurrencyDto>>> GetAll()
+        public async Task<ActionResult<IEnumerable<CurrencyDto>>> GetAll(CancellationToken cancellationToken)
         {
-            var currencies = await _currencyService.GetAllAsync();
-            return Ok(currencies);
-        }
-
-        [HttpGet]
-        [Route("target")]
-        public async Task<ActionResult<IEnumerable<CurrencyDto>>> GetAllTarget()
-        {
-            var currencies = await _currencyService.GetAllTargetAsync();
+            var currencies = await _currencyService.GetAllAsync(cancellationToken);
             return Ok(currencies);
         }
 
         [HttpGet]
         [Route("{id}")]
-        public async Task<ActionResult<CurrencyDto>> GetById([FromRoute] int id)
+        public async Task<ActionResult<CurrencyDto>> GetById([FromRoute] int id, CancellationToken cancellationToken)
         {
-            var foundCurrency = await _currencyService.GetByIdAsync(id);
-
-            if (foundCurrency is null) return NotFound();
-
-            return Ok(foundCurrency);
-        }
-
-        [HttpGet]
-        [Route("target/{id}")]
-        public async Task<ActionResult<CurrencyDto>> GetByIdTarget([FromRoute] int id)
-        {
-            var foundCurrency = await _currencyService.GetByIdTargetAsync(id);
+            var foundCurrency = await _currencyService.GetByIdAsync(id, cancellationToken);
 
             if (foundCurrency is null) return NotFound();
 
@@ -55,9 +36,9 @@ namespace ScrapAPI.Controllers
 
         [HttpGet]
         [Route("list")]
-        public async Task<ActionResult<CurrencyDto>> GetByIdTarget([FromQuery] ExchangeRateQueryParams queryParams)
+        public async Task<ActionResult<CurrencyDto>> GetByIdTarget([FromQuery] ExchangeRateQueryParams queryParams, CancellationToken cancellationToken)
         {
-            var foundCurrency = await _currencyService.GetByIdAndRateCurrencyIdAsync(queryParams.Id, queryParams.TargetCyrrencyId);
+            var foundCurrency = await _currencyService.GetByIdAndRateCurrencyIdAsync(queryParams.Id, queryParams.TargetCyrrencyId, cancellationToken);
 
             if (foundCurrency is null) return NotFound();
 

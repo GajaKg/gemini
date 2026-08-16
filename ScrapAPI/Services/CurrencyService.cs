@@ -13,9 +13,9 @@ namespace ScrapAPI.Services
             _currencyRepository = currencyRepository;
         }
 
-        public async Task<IEnumerable<CurrencyDto>> GetAllAsync()
+        public async Task<IEnumerable<CurrencyDto>> GetAllAsync(CancellationToken cancellationToken)
         {
-            var currencies = await _currencyRepository.GetAllAsync();
+            var currencies = await _currencyRepository.GetAllAsync(cancellationToken);
             return currencies
                 .Select(c => new CurrencyDto
                 {
@@ -39,36 +39,10 @@ namespace ScrapAPI.Services
                 })
                 .ToList();
         }
-        public async Task<IEnumerable<CurrencyDto>> GetAllTargetAsync()
+    
+        public async Task<CurrencyDto?> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
-            var currencies = await _currencyRepository.GetAllTargetAsync();
-            return currencies
-                .Select(c => new CurrencyDto
-                {
-                    Id = c.Id,
-                    Code = c.Code,
-                    Name = c.Name,
-                    ExchangeRates = c.TargetExchangeRates
-                        .Select(er => new ExchangeRateDto
-                        {
-                            Id = er.Id,
-                            Sell = er.Sell,
-                            Buy = er.Buy,
-                            Middle = er.Middle,
-                            Date = er.Date,
-                            Currency = er.Currency is null
-                                ? null
-                                : er.Currency!.ToCurrencyWithoutRatesDto(),
-                        })
-                        .ToList()
-                })
-                .ToList();
-        }
-
-
-        public async Task<CurrencyDto?> GetByIdAsync(int id)
-        {
-            var currency = await _currencyRepository.GetByIdAsync(id);
+            var currency = await _currencyRepository.GetByIdAsync(id, cancellationToken);
 
             if (currency is null) return null;
 
@@ -93,36 +67,9 @@ namespace ScrapAPI.Services
             };
         }
 
-        public async Task<CurrencyDto?> GetByIdTargetAsync(int id)
+        public async Task<CurrencyDto?> GetByIdAndRateCurrencyIdAsync(int id, int rateCurrencyId, CancellationToken cancellationToken)
         {
-            var currency = await _currencyRepository.GetByIdTargetAsync(id);
-
-            if (currency is null) return null;
-
-            return new CurrencyDto
-            {
-                Id = currency.Id,
-                Code = currency.Code,
-                Name = currency.Name,
-                ExchangeRates = currency.TargetExchangeRates
-                                    .Select(er => new ExchangeRateDto
-                                    {
-                                        Id = er.Id,
-                                        Sell = er.Sell,
-                                        Buy = er.Buy,
-                                        Middle = er.Middle,
-                                        Date = er.Date,
-                                        Currency = er.Currency is null
-                                            ? null
-                                            : er.Currency!.ToCurrencyWithoutRatesDto(),
-                                    })
-                                    .ToList()
-            };
-        }
-
-        public async Task<CurrencyDto?> GetByIdAndRateCurrencyIdAsync(int id, int rateCurrencyId)
-        {
-            var currency = await _currencyRepository.GetByIdAndRateCurrencyIdAsync(id, rateCurrencyId);
+            var currency = await _currencyRepository.GetByIdAndRateCurrencyIdAsync(id, rateCurrencyId, cancellationToken);
 
             if (currency is null) return null;
 
