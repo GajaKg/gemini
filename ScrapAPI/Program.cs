@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using ScrapAPI.Data;
+using ScrapAPI.Middleware;
 using ScrapAPI.Repositories;
 using ScrapAPI.Services;
 
@@ -47,7 +48,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
 // Middlewares
-// builder.Services.AddTransient<GlobalExceptionMiddleware>();
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 // rate limiter
 // The approach I just showed you has a problem - the rate limit policy is global and applies to all users. 
@@ -114,6 +116,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowBlazorLocalhost");
+app.UseExceptionHandler();
 app.MapControllers();
 
 app.Run();
