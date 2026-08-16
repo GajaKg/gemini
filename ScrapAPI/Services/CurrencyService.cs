@@ -1,3 +1,4 @@
+using Scrap.Domain.Models;
 using ScrapAPI.Dto;
 using ScrapAPI.Mappers;
 using ScrapAPI.Repositories;
@@ -17,54 +18,17 @@ namespace ScrapAPI.Services
         {
             var currencies = await _currencyRepository.GetAllAsync(cancellationToken);
             return currencies
-                .Select(c => new CurrencyDto
-                {
-                    Id = c.Id,
-                    Code = c.Code,
-                    Name = c.Name,
-                    ExchangeRates = c.ExchangeRates
-                        .Select(er => new ExchangeRateDto
-                        {
-                            Id = er.Id,
-                            Sell = er.Sell,
-                            Buy = er.Buy,
-                            Middle = er.Middle,
-                            Date = er.Date,
-                            // TargetCurrency = er.TargetCurrency is null
-                            Currency = er.TargetCurrency is null
-                                ? null
-                                : er.TargetCurrency!.ToCurrencyWithoutRatesDto(),
-                        })
-                        .ToList()
-                })
+                .Select(c => MapToDto(c))
                 .ToList();
         }
-    
+
         public async Task<CurrencyDto?> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
             var currency = await _currencyRepository.GetByIdAsync(id, cancellationToken);
 
             if (currency is null) return null;
 
-            return new CurrencyDto
-            {
-                Id = currency.Id,
-                Code = currency.Code,
-                Name = currency.Name,
-                ExchangeRates = currency.ExchangeRates
-                                    .Select(er => new ExchangeRateDto
-                                    {
-                                        Id = er.Id,
-                                        Sell = er.Sell,
-                                        Buy = er.Buy,
-                                        Middle = er.Middle,
-                                        Date = er.Date,
-                                        Currency = er.TargetCurrency is null
-                                            ? null
-                                            : er.TargetCurrency!.ToCurrencyWithoutRatesDto(),
-                                    })
-                                    .ToList()
-            };
+            return MapToDto(currency);
         }
 
         public async Task<CurrencyDto?> GetByIdAndRateCurrencyIdAsync(int id, int rateCurrencyId, CancellationToken cancellationToken)
@@ -73,24 +37,28 @@ namespace ScrapAPI.Services
 
             if (currency is null) return null;
 
+            return MapToDto(currency);
+        }
+
+        private static CurrencyDto MapToDto(Currency currency)
+        {
             return new CurrencyDto
             {
                 Id = currency.Id,
                 Code = currency.Code,
                 Name = currency.Name,
+
                 ExchangeRates = currency.ExchangeRates
-                                    .Select(er => new ExchangeRateDto
-                                    {
-                                        Id = er.Id,
-                                        Sell = er.Sell,
-                                        Buy = er.Buy,
-                                        Middle = er.Middle,
-                                        Date = er.Date,
-                                        Currency = er.TargetCurrency is null
-                                            ? null
-                                            : er.TargetCurrency!.ToCurrencyWithoutRatesDto(),
-                                    })
-                                    .ToList()
+                    .Select(er => new ExchangeRateDto
+                    {
+                        Id = er.Id,
+                        Sell = er.Sell,
+                        Buy = er.Buy,
+                        Middle = er.Middle,
+                        Date = er.Date,
+                        Currency = er.TargetCurrency?.ToCurrencyWithoutRatesDto()
+                    })
+                    .ToList()
             };
         }
     }
