@@ -8,5 +8,4 @@ public class ExchangeRate
     public decimal Sell { get; set; }
     public decimal Middle { get; set; }
     public DateOnly Date { get; set; }
-    public required Currency Currency { get; set; }
 }

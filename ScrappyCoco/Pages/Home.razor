@@ -3,11 +3,12 @@
 
 @using ScrappyCoco.Components
 @using ScrappyCoco.Services.Currencies;
+@using ScrappyCoco.Services.ExchangeRates;
 @using ScrappyCoco.Enums;
-@using MudBlazor.Services;
 
-@inject HttpClient Http
-@inject ICurrenciesService _currenciesService
+@inject HttpClient Http;
+@inject ICurrenciesService _currenciesService;
+@inject IExchangeRateService _exchangeRateService;
 
 <PageTitle>Exchange Rates</PageTitle>
 <h1>Exchange Rates</h1>
@@ -16,7 +17,7 @@
 {
     <p>Loading...</p>
 }
-else if (currency is null)
+else if (exchangeRates is null)
 {
     <p>No rates</p>
 }
@@ -34,23 +35,23 @@ else
         </div>
     }
 
-    @if (inCurrencies is not null)
+    @if (targetCurrencies is not null)
     {
         <div class="mb-4">
             <p>Rates in:</p>
             <div class="d-flex gap-2">
-                <CurrencySelector CurrencyList="inCurrencies" ActiveId="selectedInCurrency!.Id"
+                <CurrencySelector CurrencyList="targetCurrencies" ActiveId="selectedTargetCurrency!.Id"
                                   OnCurrencyClick="(item) => Exchange(CurrencySelectionType.To, item)" />
             </div>
         </div>
     }
 
-    <h3>Rates for: @currency?.Name</h3>
-    <p>1 @selectedInCurrency?.Code to @selectedForCurrency?.Code </p>
+    <h3>Rates for: @selectedForCurrency?.Name</h3>
+    <p>1 @selectedTargetCurrency?.Code to @selectedForCurrency?.Code </p>
 
-    @if (currency is not null)
+    @if (exchangeRates is not null)
     {
-        <RatesTable ExchangeRates="currency.ExchangeRates" IsLoading="isLoading" />
+        <RatesTable ExchangeRates="exchangeRates" targetCurrencyCode="selectedTargetCurrency?.Code" IsLoading="isLoading" />
     }
 }
 
@@ -58,13 +59,14 @@ else
 @using Models;
 
 CurrencyCode[] ratesForCode = [CurrencyCode.XOF, CurrencyCode.MAD];
-CurrencyCode[] ratesInCode = [CurrencyCode.EUR, CurrencyCode.USD];
+CurrencyCode[] ratesTargetCode = [CurrencyCode.EUR, CurrencyCode.USD];
 
-private Currency? currency;
+@* private Currency? currency; *@
+private PagedResponse<ExchangeRate>? exchangeRates;
 private List<Currency> forCurrencies = [];
-private List<Currency> inCurrencies = [];
+private List<Currency> targetCurrencies = [];
 private Currency? selectedForCurrency;
-private Currency? selectedInCurrency;
+private Currency? selectedTargetCurrency;
 private bool isLoading = false;
 private bool initLoading = false;
 
@@ -83,19 +85,23 @@ protected override async Task OnInitializedAsync()
             .Where(c => ratesForCode.Contains(c.Code))
             .ToList();
 
-        inCurrencies = currencies
-            .Where(c => ratesInCode.Contains(c.Code))
+        targetCurrencies = currencies
+            .Where(c => ratesTargetCode.Contains(c.Code))
             .ToList();
 
-        if (forCurrencies.Count == 0 || inCurrencies.Count == 0)
+        if (forCurrencies.Count == 0 || targetCurrencies.Count == 0)
             return;
 
         selectedForCurrency = forCurrencies.FirstOrDefault();
-        selectedInCurrency = inCurrencies.FirstOrDefault();
+        selectedTargetCurrency = targetCurrencies.FirstOrDefault();
 
-        if (selectedForCurrency is null || selectedInCurrency is null) return;
+        if (selectedForCurrency is null || selectedTargetCurrency is null) return;
 
-        currency = await _currenciesService.GetCurrencyAndRatesByTargetId(selectedForCurrency.Id, selectedInCurrency.Id);
+        @* currency = await _currenciesService.GetCurrencyAndRatesByTargetId(selectedForCurrency.Id, selectedTargetCurrency.Id);
+*@
+        exchangeRates = await _exchangeRateService.GetAllRates(selectedForCurrency.Id, selectedTargetCurrency.Id);
+        await JS.InvokeVoidAsync("console.log", "User data: ", exchangeRates);
+
     }
     catch (Exception ex)
     {
@@ -116,15 +122,15 @@ private async Task Exchange(CurrencySelectionType selection, Currency selectedCu
     }
     else
     {
-        selectedInCurrency = selectedCurrency;
+        selectedTargetCurrency = selectedCurrency;
     }
 
     isLoading = true;
 
     try
     {
-        if (selectedForCurrency is null || selectedInCurrency is null) return;
-        currency = await _currenciesService.GetCurrencyAndRatesByTargetId(selectedForCurrency.Id, selectedInCurrency.Id);
+        if (selectedForCurrency is null || selectedTargetCurrency is null) return;
+        exchangeRates = await _exchangeRateService.GetAllRates(selectedForCurrency.Id, selectedTargetCurrency.Id);
     }
     catch (Exception ex)
     {

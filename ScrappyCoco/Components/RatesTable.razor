@@ -1,6 +1,9 @@
 @inject HttpClient Http;
 
-<MudTable Items="@ExchangeRates" Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Info"
+@using ScrappyCoco.Enums;
+
+
+<MudTable Items="@ExchangeRates.Items" Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Info"
           Loading="@IsLoading" Filter="new Func<ExchangeRate,bool>(FilterByDate)">
     <ToolBarContent>
         @* <MudText Typo="Typo.h6">Periodic Elements</MudText> *@
@@ -16,7 +19,7 @@
         <MudTh>Date</MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="Currency">1 @context.Currency?.Name</MudTd>
+        <MudTd DataLabel="Currency">1 @targetCurrencyCode =</MudTd>
         <MudTd DataLabel="Buy">@context.Buy</MudTd>
         <MudTd DataLabel="Sell">@context.Sell</MudTd>
         <MudTd DataLabel="Middle">@context.Middle</MudTd>
@@ -33,7 +36,10 @@
 
 [Parameter]
 [EditorRequired]
-public List<ExchangeRate> ExchangeRates { get; set; } = [];
+public PagedResponse<ExchangeRate> ExchangeRates { get; set; }
+
+[Parameter]
+public CurrencyCode? targetCurrencyCode { get; set; }
 
 [Parameter]
 public bool IsLoading { get; set; } = false;
