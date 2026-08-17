@@ -10,6 +10,7 @@ using gemini.Services.CurrencyProviders;
 using gemini.Services.CurrencyParser;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using gemini.Services.Email;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -24,6 +25,7 @@ builder.Services.AddSerilog((services, loggerConfiguration) =>
 
 builder.Services.AddHttpClient();
 
+builder.Services.AddSingleton<IEmailService, EmailService>();
 builder.Services.AddSingleton<IHttpClientProvider, HttpClientProvider>();
 builder.Services.AddSingleton<ISeleniumProvider, SeleniumProvider>();
 
