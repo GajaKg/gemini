@@ -8,7 +8,6 @@ using gemini.Services;
 using gemini.Services.HtmlProviders;
 using gemini.Services.CurrencyProviders;
 using gemini.Services.CurrencyParser;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using gemini.Services.Email;
 using gemini.Application;
@@ -68,8 +67,7 @@ await db.Database.MigrateAsync();
 
 
 
-
+// running app
 var runner = scope.ServiceProvider.GetRequiredService<ScrapingRunner>();
-
-await runner.RunScrapeLastDaysAsync();
+// await runner.RunScrapeLastDaysAsync();
 await runner.RunScrapeDateRangeAsync();
