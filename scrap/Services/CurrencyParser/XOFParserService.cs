@@ -1,6 +1,8 @@
 
+using gemini.Services.Email;
 using gemini.Utilities;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Scrap.Domain.Enums;
 using Scrap.Domain.Interfaces;
@@ -11,19 +13,36 @@ namespace gemini.Services.CurrencyParser
     public class XOFParserService : IXofParserService
     {
         private readonly ILogger<XOFParserService> _logger;
-        public XOFParserService(ILogger<XOFParserService> logger)
+        private readonly IEmailService _email;
+        private readonly IConfiguration _configuration;
+        
+        public XOFParserService(ILogger<XOFParserService> logger, IEmailService email, IConfiguration configuration)
         {
+            _configuration = configuration;
             _logger = logger;
+            _email = email;
         }
 
         /// <summary>
         /// Extract data from html
         /// </summary>
-        public List<ExchangeRateRaw>? Parse(HtmlDocument doc)
+        public async Task<List<ExchangeRateRaw>?> Parse(HtmlDocument doc, CancellationToken cancellationToken)
         {
             // <tr><td>EUR</td><td>655,957</td><td>655,957</td></tr>
             var rows = doc.DocumentNode.SelectNodes("//table/tbody/tr");
+            var exchangeRateTitle = doc.DocumentNode.SelectSingleNode("//h2[normalize-space()='Exchange rates of']");
 
+            if (rows is null && exchangeRateTitle is null)
+            {
+                _logger.LogCritical("Please check page for html changes!!!");
+                var errorReciever = _configuration["Email:ErrorReciever"];
+
+                if (errorReciever is null) return null;
+                await _email.ComposeMessage(errorReciever, "XOF scraper critical error", "Please check page for html changes!", cancellationToken);
+
+                return null;
+            }
+            
             if (rows is null)
             {
                 _logger.LogWarning("⚠️  Missing currency or please check page for html changes.");

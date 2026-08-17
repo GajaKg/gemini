@@ -55,7 +55,7 @@ namespace gemini.Services.CurrencyProviders
             if (doc is null) return null;
 
             // extracting data from html
-            return _parserService.Parse(doc);
+            return await _parserService.Parse(doc, cancellationToken);
         }
     }
 }

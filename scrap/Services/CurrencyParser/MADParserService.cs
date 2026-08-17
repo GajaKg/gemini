@@ -1,6 +1,8 @@
 using System.Text.RegularExpressions;
+using gemini.Services.Email;
 using gemini.Utilities;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Scrap.Domain.Enums;
 using Scrap.Domain.Interfaces;
@@ -11,11 +13,14 @@ namespace gemini.Services.CurrencyParser;
 public class MADParserService : IMadParserService
 {
     private readonly ILogger<MADParserService> _logger;
+    private readonly IEmailService _email;
+    private readonly IConfiguration _configuration;
 
-    public MADParserService(ILogger<MADParserService> logger)
+    public MADParserService(ILogger<MADParserService> logger, IEmailService email, IConfiguration configuration)
     {
+        _configuration = configuration;
         _logger = logger;
-
+        _email = email;
     }
 
     // <table class="dynamic_contents_ref_19">
@@ -65,7 +70,7 @@ public class MADParserService : IMadParserService
     /// <summary>
     /// Extract data from html
     /// </summary>
-    public List<ExchangeRateRaw>? Parse(HtmlDocument doc)
+    public async Task<List<ExchangeRateRaw>?> Parse(HtmlDocument doc, CancellationToken cancellationToken)
     {
         // <tr>
         //     <td><span class="object_name">1 EURO</span><br /></td>
@@ -73,10 +78,22 @@ public class MADParserService : IMadParserService
         //     <td><span class="number">11.4305&nbsp;<span class="symbol"></span></span></td>
         // </tr>
         var rows = doc.DocumentNode.SelectNodes("//tbody/tr");
+        var noRecords = doc.DocumentNode.SelectSingleNode("//div[contains(@class, 'block-table')]//p");
+
+        if (rows is null && noRecords is null)
+        {
+            _logger.LogCritical("Please check page for html changes!!!");
+            var errorReciever = _configuration["Email:ErrorReciever"];
+
+            if (errorReciever is null) return null;
+            await _email.ComposeMessage(errorReciever, "MAD scraper critical error", "Please check page for html changes!", cancellationToken);
+
+            return null;
+        }
 
         if (rows is null)
         {
-            _logger.LogWarning("⚠️  Missing currency or please check page for html changes.");
+            _logger.LogWarning("⚠️  Missing currency");
             return null;
         }
 
@@ -106,7 +123,7 @@ public class MADParserService : IMadParserService
                 continue;
             }
 
-            decimal? sell = CurrencyNormalize.ExtractNormalizeValueCultureUs(row.SelectSingleNode("./td[2]//span[@class='number']").InnerText);
+            decimal? sell = CurrencyNormalize.ExtractNormalizeValueCultureUs(row.SelectSingleNode("./td[3]//span[@class='number']").InnerText);
             if (sell is null)
             {
                 _logger.LogWarning("⚠️  Invalid sell value: {Sell}", sell);
