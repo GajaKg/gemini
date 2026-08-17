@@ -9,21 +9,21 @@ using Scrap.Domain.Enums;
 
 namespace gemini.Services;
 
-public class ExchangeRateScraper : IExchangeRateScraper
+public class ExchangeRateScraper<TProvider> : IExchangeRateScraper
+    where TProvider : ICurrencyProvider
 {
-    private readonly ILogger<ExchangeRateScraper> _logger;
-    private readonly ICurrencyProvider _currencyProvider;
+    private readonly TProvider _currencyProvider;
     private readonly ICurrencyRepository _currencyRepository;
     private readonly IExchangeRateRepository _exchangeRateRepository;
+    private readonly ILogger<ExchangeRateScraper<TProvider>> _logger;
 
     private const int DefaultBulkSaveNumber = 10;
 
     public ExchangeRateScraper(
-        ICurrencyProvider currencyProvider,
+        TProvider currencyProvider,
         ICurrencyRepository currencyRepository,
         IExchangeRateRepository exchangeRateRepository,
-        ILogger<ExchangeRateScraper> logger
-    )
+        ILogger<ExchangeRateScraper<TProvider>> logger)
     {
         _currencyProvider = currencyProvider;
         _currencyRepository = currencyRepository;
@@ -94,8 +94,7 @@ public class ExchangeRateScraper : IExchangeRateScraper
 
                 if (exchangeRatesRaw is null || exchangeRatesRaw.Count < 1)
                 {
-                    _logger.LogWarning("No Currency {Currency}", currency.Code);
-                    _logger.LogWarning("---- Missing date: {Date:d}", date);
+                    _logger.LogWarning("No Currency {Currency} ---- Missing date: {Date:d}", currency.Code, date);
                     continue;
                 }
 
@@ -129,6 +128,11 @@ public class ExchangeRateScraper : IExchangeRateScraper
     /// <summary>
     /// Get all currencies and saved exchange rates
     /// </summary>
+    /// <returns>
+    /// SourceCurrency - currency "from"
+    /// TargetCurrencies - used for getting currency details from extracted data
+    /// ExistingRates - check for existing rates so we can skip it
+    /// </returns>
     private async Task<(
         Currency SourceCurrency,
         Dictionary<CurrencyCode, Currency> TargetCurrencies,

@@ -11,6 +11,7 @@ using gemini.Services.CurrencyParser;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using gemini.Services.Email;
+using gemini.Application;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -25,46 +26,30 @@ builder.Services.AddSerilog((services, loggerConfiguration) =>
 
 builder.Services.AddHttpClient();
 
-builder.Services.AddSingleton<IEmailService, EmailService>();
+builder.Services.AddTransient<IEmailService, EmailService>();
+
 builder.Services.AddSingleton<IHttpClientProvider, HttpClientProvider>();
 builder.Services.AddSingleton<ISeleniumProvider, SeleniumProvider>();
 
 builder.Services.AddScoped<ICurrencyRepository, CurrencyRepository>();
 builder.Services.AddScoped<IExchangeRateRepository, ExchangeRateRepository>();
 
+builder.Services.AddScoped<ScrapingRunner>();
+
 /** 
 * register MAD
 */
 builder.Services.AddScoped<IMadParserService, MADParserService>();
 builder.Services.AddScoped<IMadCurrencyProvider, MadProvider>();
-builder.Services.AddScoped<ICurrencyProvider>(sp =>
-    sp.GetRequiredService<MadProvider>());
-
-builder.Services.AddScoped<IExchangeRateScraper>(sp =>
-    new ExchangeRateScraper(
-        sp.GetRequiredService<IMadCurrencyProvider>(),
-        sp.GetRequiredService<ICurrencyRepository>(),
-        sp.GetRequiredService<IExchangeRateRepository>(),
-        sp.GetRequiredService<ILogger<ExchangeRateScraper>>()
-    )
-);
+builder.Services.AddScoped<IExchangeRateScraper, ExchangeRateScraper<IMadCurrencyProvider>>();
 
 /** 
 * register XOF
 */
 builder.Services.AddScoped<IXofParserService, XOFParserService>();
 builder.Services.AddScoped<IXofCurrencyProvider, XofProvider>();
-builder.Services.AddScoped<ICurrencyProvider>(sp =>
-    sp.GetRequiredService<XofProvider>());
+builder.Services.AddScoped<IExchangeRateScraper, ExchangeRateScraper<IXofCurrencyProvider>>();
 
-builder.Services.AddScoped<IExchangeRateScraper>(sp =>
-    new ExchangeRateScraper(
-        sp.GetRequiredService<IXofCurrencyProvider>(),
-        sp.GetRequiredService<ICurrencyRepository>(),
-        sp.GetRequiredService<IExchangeRateRepository>(),
-        sp.GetRequiredService<ILogger<ExchangeRateScraper>>()
-    )
-);
 
 // Database
 builder.Services.AddDbContext<ApplicationDBContext>(options =>
@@ -81,10 +66,10 @@ using var scope = host.Services.CreateScope();
 var db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
 await db.Database.MigrateAsync();
 
-var scrapers = scope.ServiceProvider.GetServices<IExchangeRateScraper>();
-foreach (var scraper in scrapers)
-{
-    // await scraper.ScrapeDateRange(new DateOnly(2020, 1, 1), DateOnly.FromDateTime(DateTime.Today), 2);
-    // await scraper.ScrapeDateRange(new DateOnly(2020, 1, 1), new DateOnly(2020, 1, 5));
-    await scraper.ScrapeLastDays(10);
-}
+
+
+
+var runner = scope.ServiceProvider.GetRequiredService<ScrapingRunner>();
+
+await runner.RunScrapeLastDaysAsync();
+await runner.RunScrapeDateRangeAsync();
