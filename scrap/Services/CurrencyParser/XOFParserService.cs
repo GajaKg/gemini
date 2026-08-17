@@ -15,7 +15,7 @@ namespace gemini.Services.CurrencyParser
         private readonly ILogger<XOFParserService> _logger;
         private readonly IEmailService _email;
         private readonly IConfiguration _configuration;
-        
+
         public XOFParserService(ILogger<XOFParserService> logger, IEmailService email, IConfiguration configuration)
         {
             _configuration = configuration;
@@ -30,7 +30,7 @@ namespace gemini.Services.CurrencyParser
         {
             // <tr><td>EUR</td><td>655,957</td><td>655,957</td></tr>
             var rows = doc.DocumentNode.SelectNodes("//table/tbody/tr");
-            var exchangeRateTitle = doc.DocumentNode.SelectSingleNode("//h2[normalize-space()='Exchange rates of']");
+            var exchangeRateTitle = doc.DocumentNode.SelectSingleNode("//h2[contains(normalize-space(.), 'Exchange rates of')]");
 
             if (rows is null && exchangeRateTitle is null)
             {
@@ -42,7 +42,7 @@ namespace gemini.Services.CurrencyParser
 
                 return null;
             }
-            
+
             if (rows is null)
             {
                 _logger.LogWarning("⚠️  Missing currency or please check page for html changes.");
