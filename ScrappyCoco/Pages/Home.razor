@@ -22,27 +22,31 @@ else if (currency is null)
 }
 else
 {
-    <p>Select rates</p>
-    @if (fromCurrencies is not null)
+    <p class="my-2">Select rates</p>
+    @if (forCurrencies is not null)
     {
-        <p>From:</p>
-        <div class="d-flex gap-2">
-            <CurrencySelector CurrencyList="fromCurrencies" ActiveId="selectedFromCurrency!.Id"
-                              OnCurrencyClick="(item) => Exchange(CurrencySelectionType.From, item)" />
+        <div class="mb-4">
+            <p>Rates for:</p>
+            <div class="d-flex gap-2">
+                <CurrencySelector CurrencyList="forCurrencies" ActiveId="selectedForCurrency!.Id"
+                                  OnCurrencyClick="(item) => Exchange(CurrencySelectionType.From, item)" />
+            </div>
         </div>
     }
 
-    @if (toCurrencies is not null)
+    @if (inCurrencies is not null)
     {
-        <p>To:</p>
-        <div class="d-flex gap-2">
-            <CurrencySelector CurrencyList="toCurrencies" ActiveId="selectedToCurrency!.Id"
-                              OnCurrencyClick="(item) => Exchange(CurrencySelectionType.To, item)" />
+        <div class="mb-4">
+            <p>Rates in:</p>
+            <div class="d-flex gap-2">
+                <CurrencySelector CurrencyList="inCurrencies" ActiveId="selectedInCurrency!.Id"
+                                  OnCurrencyClick="(item) => Exchange(CurrencySelectionType.To, item)" />
+            </div>
         </div>
     }
 
-    <h3>@currency?.Name</h3>
-    <p>1 @selectedFromCurrency?.Code to @selectedToCurrency?.Code </p>
+    <h3>Rates for: @currency?.Name</h3>
+    <p>1 @selectedInCurrency?.Code to @selectedForCurrency?.Code </p>
 
     @if (currency is not null)
     {
@@ -53,14 +57,14 @@ else
 @code {
 @using Models;
 
-    CurrencyCode[] fromCode = [CurrencyCode.XOF, CurrencyCode.MAD];
-CurrencyCode[] toCode = [CurrencyCode.EUR, CurrencyCode.USD];
+CurrencyCode[] ratesForCode = [CurrencyCode.XOF, CurrencyCode.MAD];
+CurrencyCode[] ratesInCode = [CurrencyCode.EUR, CurrencyCode.USD];
 
 private Currency? currency;
-private List<Currency> fromCurrencies = [];
-private List<Currency> toCurrencies = [];
-private Currency? selectedFromCurrency;
-private Currency? selectedToCurrency;
+private List<Currency> forCurrencies = [];
+private List<Currency> inCurrencies = [];
+private Currency? selectedForCurrency;
+private Currency? selectedInCurrency;
 private bool isLoading = false;
 private bool initLoading = false;
 
@@ -75,24 +79,23 @@ protected override async Task OnInitializedAsync()
         if (currencies is null)
             return;
 
-        fromCurrencies = currencies
-            .Where(c => fromCode.Contains(c.Code))
+        forCurrencies = currencies
+            .Where(c => ratesForCode.Contains(c.Code))
             .ToList();
 
-        toCurrencies = currencies
-            .Where(c => toCode.Contains(c.Code))
+        inCurrencies = currencies
+            .Where(c => ratesInCode.Contains(c.Code))
             .ToList();
 
-        if (fromCurrencies.Count == 0 || toCurrencies.Count == 0)
+        if (forCurrencies.Count == 0 || inCurrencies.Count == 0)
             return;
 
-        selectedFromCurrency = fromCurrencies.FirstOrDefault();
-        selectedToCurrency = toCurrencies.FirstOrDefault();
+        selectedForCurrency = forCurrencies.FirstOrDefault();
+        selectedInCurrency = inCurrencies.FirstOrDefault();
 
-        if (selectedFromCurrency is null || selectedToCurrency is null) return;
+        if (selectedForCurrency is null || selectedInCurrency is null) return;
 
-        currency = await _currenciesService.GetCurrencyAndRatesByTargetId(selectedFromCurrency.Id, targetCurrencyId:
-    selectedToCurrency.Id);
+        currency = await _currenciesService.GetCurrencyAndRatesByTargetId(selectedForCurrency.Id, selectedInCurrency.Id);
     }
     catch (Exception ex)
     {
@@ -109,19 +112,19 @@ private async Task Exchange(CurrencySelectionType selection, Currency selectedCu
 {
     if (selection == CurrencySelectionType.From)
     {
-        selectedFromCurrency = selectedCurrency;
+        selectedForCurrency = selectedCurrency;
     }
     else
     {
-        selectedToCurrency = selectedCurrency;
+        selectedInCurrency = selectedCurrency;
     }
 
     isLoading = true;
 
     try
     {
-        if (selectedFromCurrency is null || selectedToCurrency is null) return;
-        currency = await _currenciesService.GetCurrencyAndRatesByTargetId(selectedFromCurrency.Id, selectedToCurrency.Id);
+        if (selectedForCurrency is null || selectedInCurrency is null) return;
+        currency = await _currenciesService.GetCurrencyAndRatesByTargetId(selectedForCurrency.Id, selectedInCurrency.Id);
     }
     catch (Exception ex)
     {

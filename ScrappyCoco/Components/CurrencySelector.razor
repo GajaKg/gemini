@@ -8,8 +8,6 @@
 
 @if (CurrencyList is not null)
 {
-
-    @* <div class="d-flex gap-2"> *@
     @foreach (var item in CurrencyList)
     {
         <MudButton Color="Color.Primary" Size="Size.Small" OnClick="@(() => CurrencyClick(item))"
@@ -17,7 +15,6 @@
             @item.Code
         </MudButton>
     }
-    @* </div> *@
 }
 
 
