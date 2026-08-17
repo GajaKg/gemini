@@ -9,5 +9,5 @@ public class ExchangeRateDto
     public decimal Middle { get; set; }
     public DateOnly Date { set; get; }
     // public CurrencyWithoutRatesDto? TargetCurrency { get; set; }
-    public CurrencyWithoutRatesDto? Currency { get; set; }
+    // public CurrencyWithoutRatesDto? Currency { get; set; }
 }

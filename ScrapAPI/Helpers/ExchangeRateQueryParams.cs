@@ -7,8 +7,8 @@ public class ExchangeRateQueryParamsSingle
     public DateOnly Date { get; set; }
 }
 
-public class ExchangeRateQueryParams
+public class ExchangeRateQueryParams : PaginationParams
 {
     public int Id { get; set; }
-    public int TargetCyrrencyId { get; set; }
+    public int TargetCurrencyId { get; set; }
 }
