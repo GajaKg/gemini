@@ -14,14 +14,20 @@ public class ExchangeRateRepository : IExchangeRateRepository
         _context = context;
     }
 
-    public async Task<PagedList<ExchangeRate>> GetRatesByCurrencySourceAndTargetId(int id, int targetId, PaginationParams pagination, CancellationToken cancellationToken)
+    public async Task<PagedList<ExchangeRate>> GetRatesByCurrencySourceAndTargetId(int id, int targetId, DateOnly? date, PaginationParams pagination, CancellationToken cancellationToken)
     {
-        var source = _context.ExchangeRates
+        var sourceQuery = _context.ExchangeRates
             .AsNoTracking()
-            .Where(er => er.CurrencyId == id && er.TargetCurrencyId == targetId)
-            .OrderByDescending(er => er.Date)
+            .Where(er => er.CurrencyId == id && er.TargetCurrencyId == targetId);
+
+        if (date.HasValue)
+        {
+            sourceQuery = sourceQuery.Where(er => er.Date == date.Value);
+        }
+
+        sourceQuery = sourceQuery.OrderByDescending(er => er.Date)
                 .ThenByDescending(er => er.Id);
 
-        return await PagedList<ExchangeRate>.CreateAsync(source, pagination.CurrentPage, pagination.PageSize, cancellationToken);
+        return await PagedList<ExchangeRate>.CreateAsync(sourceQuery, pagination.CurrentPage, pagination.PageSize, cancellationToken);
     }
 }

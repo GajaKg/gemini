@@ -28,7 +28,9 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddScoped<ICurrencyService, CurrencyService>();
+builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();
 builder.Services.AddScoped<ICurrencyRepository, CurrencyRepository>();
+builder.Services.AddScoped<IExchangeRateRepository, ExchangeRateRepository>();
 
 
 // Controllers
