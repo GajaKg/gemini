@@ -4,5 +4,5 @@ namespace ScrappyCoco.Services.ExchangeRates;
 
 public interface IExchangeRateService
 {
-    public Task<PagedResponse<ExchangeRate>?> GetAllRates(int currencyForId, int currencyTargetId, PaginationParams paginationParams, DateTime? searchDate);
+    public Task<PagedResponse<ExchangeRate>?> GetAllRates(ExchangeRateParams exchangeRateParams, CancellationToken cancellationToken);
 }

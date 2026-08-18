@@ -1,6 +1,4 @@
 @using ScrappyCoco.Services.Currencies;
-@using ScrappyCoco.Enums;
-@using MudBlazor.Services;
 
 @inject HttpClient Http;
 @inject ICurrenciesService _currenciesService;
@@ -31,16 +29,9 @@ public int ActiveId { get; set; }
 [Parameter]
 public EventCallback<Currency> OnCurrencyClick { get; set; }
 
-protected override async Task OnInitializedAsync()
-{
-
-}
-
 public async Task CurrencyClick(Currency item)
 {
     await OnCurrencyClick.InvokeAsync(item);
 }
-
-
 
 }

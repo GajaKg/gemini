@@ -1,6 +1,5 @@
 using System.Net.Http.Json;
 using ScrappyCoco.Models;
-
 namespace ScrappyCoco.Services.ExchangeRates;
 
 public class ExchangeRateService : IExchangeRateService
@@ -13,26 +12,35 @@ public class ExchangeRateService : IExchangeRateService
         _httpClient = httpClient;
     }
 
-    public async Task<PagedResponse<ExchangeRate>?> GetAllRates(int currencyForId, int currencyTargetId, PaginationParams paginationParams, DateTime? searchDate)
+    public async Task<PagedResponse<ExchangeRate>?> GetAllRates(ExchangeRateParams exchangeRateParams, CancellationToken cancellationToken)
     {
         var queryParams = new Dictionary<string, string?>
         {
-            ["Id"] = currencyForId.ToString(),
-            ["TargetCurrencyId"] = currencyTargetId.ToString(),
-            ["CurrentPage"] = paginationParams.CurrentPage.ToString(),
-            ["PageSize"] = paginationParams.PageSize.ToString(),
+            ["Id"] = exchangeRateParams.CurrencyForId.ToString(),
+            ["TargetCurrencyId"] = exchangeRateParams.CurrencyTargetId.ToString(),
+            ["CurrentPage"] = exchangeRateParams.CurrentPage.ToString(),
+            ["PageSize"] = exchangeRateParams.PageSize.ToString(),
         };
 
-        if (searchDate.HasValue)
+        if (exchangeRateParams.SearchDate.HasValue)
         {
             queryParams["Date"] = DateOnly
-                                    .FromDateTime(searchDate.Value)
+                                    .FromDateTime(exchangeRateParams.SearchDate.Value)
                                     .ToString("yyyy-MM-dd");
         }
 
-        var queryString = await new FormUrlEncodedContent(queryParams).ReadAsStringAsync();
+        var queryString = await new FormUrlEncodedContent(queryParams).ReadAsStringAsync(cancellationToken);
         string fullUrl = $"{_url}?{queryString}";
 
-        return await _httpClient.GetFromJsonAsync<PagedResponse<ExchangeRate>>(fullUrl);
+        try
+        {
+            return await _httpClient.GetFromJsonAsync<PagedResponse<ExchangeRate>>(
+                fullUrl,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            throw;
+        }
     }
 }

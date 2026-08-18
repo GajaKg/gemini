@@ -1,0 +1,13 @@
+<div>
+    <MudNumericField Class="mb-2" @bind-Value="amount" Label="Amount" Variant="Variant.Text" Min="0" />
+    <MudText Typo="Typo.subtitle2">Calculated: @(Rate * amount)</MudText>
+</div>
+
+@code {
+
+[Parameter]
+[EditorRequired]
+public decimal Rate { get; set; }
+
+private decimal amount = 0;
+}
