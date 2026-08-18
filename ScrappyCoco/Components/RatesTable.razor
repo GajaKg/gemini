@@ -1,15 +1,18 @@
-@inject HttpClient Http;
-
 @using ScrappyCoco.Enums;
+@using ScrappyCoco.Services.ExchangeRates;
+
+@inject IExchangeRateService _exchangeRateService
+@inject HttpClient Http;
+@inject IJSRuntime JS
 
 
-<MudTable Items="@ExchangeRates.Items" Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Info"
-          Loading="@IsLoading" Filter="new Func<ExchangeRate,bool>(FilterByDate)">
+<MudTable @ref="table" ServerData="ServerReload" Hover="true" Breakpoint="Breakpoint.Sm"
+          LoadingProgressColor="Color.Info">
     <ToolBarContent>
         @* <MudText Typo="Typo.h6">Periodic Elements</MudText> *@
         <MudSpacer />
         <MudSpacer />
-        <MudDatePicker Label="Date" @bind-Date="date" Clearable="true" />
+        <MudDatePicker Label="Date" DateChanged="OnDateChanged" Clearable="true" />
     </ToolBarContent>
     <HeaderContent>
         <MudTh>Currency</MudTh>
@@ -19,7 +22,7 @@
         <MudTh>Date</MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="Currency">1 @targetCurrencyCode =</MudTd>
+        <MudTd DataLabel="Currency">1 @SelectedTargetCurrency.Code =</MudTd>
         <MudTd DataLabel="Buy">@context.Buy</MudTd>
         <MudTd DataLabel="Sell">@context.Sell</MudTd>
         <MudTd DataLabel="Middle">@context.Middle</MudTd>
@@ -34,24 +37,98 @@
 @code {
 @using Models;
 
+private Currency? _selectedCurrency;
+private Currency? _selectedTargetCurrency;
+
 [Parameter]
 [EditorRequired]
-public PagedResponse<ExchangeRate> ExchangeRates { get; set; }
-
-[Parameter]
-public CurrencyCode? targetCurrencyCode { get; set; }
-
-[Parameter]
-public bool IsLoading { get; set; } = false;
-
-private DateTime? date;
-
-private bool FilterByDate(ExchangeRate rate)
+public Currency? SelectedCurrency
 {
-    if (date is null)
-        return true;
-
-    return rate.Date == DateOnly.FromDateTime(date.Value);
+    get => _selectedCurrency;
+    set
+    {
+        if (_selectedCurrency != value)
+        {
+            _selectedCurrency = value;
+            OnCurrencyChanged();
+        }
+    }
 }
 
+[Parameter]
+[EditorRequired]
+public Currency? SelectedTargetCurrency
+{
+    get => _selectedTargetCurrency;
+    set
+    {
+        if (_selectedTargetCurrency != value)
+        {
+            _selectedTargetCurrency = value;
+            OnCurrencyChanged();
+        }
+    }
+}
+
+[Parameter]
+public EventCallback<PaginationParams> OnQueryChanged { get; set; }
+
+private MudTable<ExchangeRate>? table;
+
+private DateTime? searchDate;
+
+private async Task OnCurrencyChanged()
+{
+    if (table is null) return;
+    await table.ReloadServerData();
+}
+
+
+private async Task<TableData<ExchangeRate>> ServerReload(TableState state, CancellationToken token)
+{
+    PaginationParams paginationParams = new PaginationParams
+    {
+        PageSize = state.PageSize,
+        CurrentPage = state.Page + 1
+    };
+
+    if (SelectedCurrency is null || SelectedTargetCurrency is null)
+    {
+        return new TableData<ExchangeRate>()
+        {
+            TotalItems = 0,
+            Items = []
+        }; ;
+    }
+
+    var rates = await _exchangeRateService.GetAllRates(
+                        SelectedCurrency.Id,
+                        SelectedTargetCurrency.Id,
+                        paginationParams,
+                        searchDate
+                    );
+
+    if (rates is null)
+    {
+        return new TableData<ExchangeRate>()
+        {
+            TotalItems = 0,
+            Items = []
+        }; ;
+    }
+
+    @* await JS.InvokeVoidAsync("console.log", "State: ", state); *@
+    return new TableData<ExchangeRate>()
+    {
+        TotalItems = rates.TotalCount,
+        Items = rates.Items
+    };
+}
+private async Task OnDateChanged(DateTime? value)
+{
+    searchDate = value;
+
+    if (table is not null)
+        await table.ReloadServerData();
+}
 }

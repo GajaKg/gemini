@@ -17,7 +17,7 @@
 {
     <p>Loading...</p>
 }
-else if (exchangeRates is null)
+else if (selectedForCurrency is null || selectedTargetCurrency is null)
 {
     <p>No rates</p>
 }
@@ -30,7 +30,7 @@ else
             <p>Rates for:</p>
             <div class="d-flex gap-2">
                 <CurrencySelector CurrencyList="forCurrencies" ActiveId="selectedForCurrency!.Id"
-                                  OnCurrencyClick="(item) => Exchange(CurrencySelectionType.From, item)" />
+                                  OnCurrencyClick="(item) => CurrencyChanged(CurrencySelectionType.From, item)" />
             </div>
         </div>
     }
@@ -41,7 +41,7 @@ else
             <p>Rates in:</p>
             <div class="d-flex gap-2">
                 <CurrencySelector CurrencyList="targetCurrencies" ActiveId="selectedTargetCurrency!.Id"
-                                  OnCurrencyClick="(item) => Exchange(CurrencySelectionType.To, item)" />
+                                  OnCurrencyClick="(item) => CurrencyChanged(CurrencySelectionType.To, item)" />
             </div>
         </div>
     }
@@ -49,10 +49,7 @@ else
     <h3>Rates for: @selectedForCurrency?.Name</h3>
     <p>1 @selectedTargetCurrency?.Code to @selectedForCurrency?.Code </p>
 
-    @if (exchangeRates is not null)
-    {
-        <RatesTable ExchangeRates="exchangeRates" targetCurrencyCode="selectedTargetCurrency?.Code" IsLoading="isLoading" />
-    }
+    <RatesTable SelectedCurrency="selectedForCurrency" SelectedTargetCurrency="selectedTargetCurrency" />
 }
 
 @code {
@@ -61,16 +58,30 @@ else
 CurrencyCode[] ratesForCode = [CurrencyCode.XOF, CurrencyCode.MAD];
 CurrencyCode[] ratesTargetCode = [CurrencyCode.EUR, CurrencyCode.USD];
 
-@* private Currency? currency; *@
-private PagedResponse<ExchangeRate>? exchangeRates;
 private List<Currency> forCurrencies = [];
 private List<Currency> targetCurrencies = [];
 private Currency? selectedForCurrency;
 private Currency? selectedTargetCurrency;
-private bool isLoading = false;
 private bool initLoading = false;
 
 protected override async Task OnInitializedAsync()
+{
+    await InitCurrencies();
+}
+
+private async Task CurrencyChanged(CurrencySelectionType selection, Currency selectedCurrency)
+{
+    if (selection == CurrencySelectionType.From)
+    {
+        selectedForCurrency = selectedCurrency;
+    }
+    else
+    {
+        selectedTargetCurrency = selectedCurrency;
+    }
+}
+
+private async Task InitCurrencies()
 {
     initLoading = true;
 
@@ -95,13 +106,7 @@ protected override async Task OnInitializedAsync()
         selectedForCurrency = forCurrencies.FirstOrDefault();
         selectedTargetCurrency = targetCurrencies.FirstOrDefault();
 
-        if (selectedForCurrency is null || selectedTargetCurrency is null) return;
-
-        @* currency = await _currenciesService.GetCurrencyAndRatesByTargetId(selectedForCurrency.Id, selectedTargetCurrency.Id);
-*@
-        exchangeRates = await _exchangeRateService.GetAllRates(selectedForCurrency.Id, selectedTargetCurrency.Id);
-        await JS.InvokeVoidAsync("console.log", "User data: ", exchangeRates);
-
+        @* await JS.InvokeVoidAsync("console.log", "User data: ", exchangeRates); *@
     }
     catch (Exception ex)
     {
@@ -110,35 +115,6 @@ protected override async Task OnInitializedAsync()
     finally
     {
         initLoading = false;
-    }
-
-}
-
-private async Task Exchange(CurrencySelectionType selection, Currency selectedCurrency)
-{
-    if (selection == CurrencySelectionType.From)
-    {
-        selectedForCurrency = selectedCurrency;
-    }
-    else
-    {
-        selectedTargetCurrency = selectedCurrency;
-    }
-
-    isLoading = true;
-
-    try
-    {
-        if (selectedForCurrency is null || selectedTargetCurrency is null) return;
-        exchangeRates = await _exchangeRateService.GetAllRates(selectedForCurrency.Id, selectedTargetCurrency.Id);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine(ex);
-    }
-    finally
-    {
-        isLoading = false;
     }
 }
 

@@ -13,14 +13,23 @@ public class ExchangeRateService : IExchangeRateService
         _httpClient = httpClient;
     }
 
-    public async Task<PagedResponse<ExchangeRate>?> GetAllRates(int currencyForId, int currencyTargetId)
+    public async Task<PagedResponse<ExchangeRate>?> GetAllRates(int currencyForId, int currencyTargetId, PaginationParams paginationParams, DateTime? searchDate)
     {
         var queryParams = new Dictionary<string, string?>
         {
             ["Id"] = currencyForId.ToString(),
             ["TargetCurrencyId"] = currencyTargetId.ToString(),
+            ["CurrentPage"] = paginationParams.CurrentPage.ToString(),
+            ["PageSize"] = paginationParams.PageSize.ToString(),
         };
-        // Convert dictionary to search?search=laptop&page=2
+
+        if (searchDate.HasValue)
+        {
+            queryParams["Date"] = DateOnly
+                                    .FromDateTime(searchDate.Value)
+                                    .ToString("yyyy-MM-dd");
+        }
+
         var queryString = await new FormUrlEncodedContent(queryParams).ReadAsStringAsync();
         string fullUrl = $"{_url}?{queryString}";
 
