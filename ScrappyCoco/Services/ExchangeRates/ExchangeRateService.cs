@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using ScrappyCoco.Models;
 namespace ScrappyCoco.Services.ExchangeRates;
@@ -34,11 +35,34 @@ public class ExchangeRateService : IExchangeRateService
 
         try
         {
-            return await _httpClient.GetFromJsonAsync<PagedResponse<ExchangeRate>>(
-                fullUrl,
-                cancellationToken);
+            var response = await _httpClient.GetAsync(
+               fullUrl,
+               cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content
+                    .ReadFromJsonAsync<PagedResponse<ExchangeRate>>(
+                        cancellationToken);
+            }
+
+            if (response.StatusCode == HttpStatusCode.BadRequest)
+            {
+                var problem = await response.Content
+                    .ReadFromJsonAsync<ValidationProblemResponse>(
+                        cancellationToken);
+
+                throw new ApiValidationException(
+                    (int)response.StatusCode,
+                    problem?.Errors ?? [],
+                    problem?.Title);
+            }
+
+            response.EnsureSuccessStatusCode();
+
+            return null;
         }
-        catch (Exception ex)
+        catch (OperationCanceledException)
         {
             throw;
         }

@@ -5,6 +5,8 @@
 @inject IJSRuntime JS
 
 
+<p class="mt-2" style="color:red">@message</p>
+
 <MudTable @ref="table" ServerData="ServerReload" Hover="true" Breakpoint="Breakpoint.Sm"
           LoadingProgressColor="Color.Info">
     <ToolBarContent>
@@ -40,7 +42,7 @@
 @code {
 @using Models;
 
-    [Parameter]
+[Parameter]
 [EditorRequired]
 public Currency? SelectedCurrency { get; set; }
 
@@ -83,6 +85,8 @@ protected override async Task OnParametersSetAsync()
     }
 }
 
+private string message = "";
+
 /// <summary>
 /// Triggered on initial load and on pagination change
 /// </summary>
@@ -110,23 +114,44 @@ private async Task<TableData<ExchangeRate>> ServerReload(TableState state, Cance
         CurrentPage = state.Page + 1
     };
 
-    var rates = await _exchangeRateService.GetAllRates(exchangeRateParams, token);
-
-    if (rates is null)
+    try
     {
-        return new TableData<ExchangeRate>()
+        var rates = await _exchangeRateService.GetAllRates(exchangeRateParams, token);
+
+        if (rates is null)
+        {
+            return new TableData<ExchangeRate>
+            {
+                TotalItems = 0,
+                Items = []
+            };
+        }
+
+        return new TableData<ExchangeRate>
+        {
+            TotalItems = rates.TotalCount,
+            Items = rates.Items
+        };
+    }
+    catch (OperationCanceledException)
+    {
+        return new TableData<ExchangeRate>
         {
             TotalItems = 0,
             Items = []
-        }; ;
+        };
     }
-
-    @* await JS.InvokeVoidAsync("console.log", "State: ", state); *@
-    return new TableData<ExchangeRate>()
+    catch (ApiValidationException ex)
     {
-        TotalItems = rates.TotalCount,
-        Items = rates.Items
-    };
+        message = ex.Message;
+
+        return new TableData<ExchangeRate>
+        {
+            TotalItems = 0,
+            Items = []
+        };
+    }
+    @* await JS.InvokeVoidAsync("console.log", "State: ", state); *@
 }
 
 private async Task OnCurrencyChanged()
