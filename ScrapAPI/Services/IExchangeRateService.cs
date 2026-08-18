@@ -5,5 +5,5 @@ namespace ScrapAPI.Services;
 
 public interface IExchangeRateService
 {
-    Task<PagedList<ExchangeRateDto>> GetRatesByCurrencySourceAndTargetId(int id, int targetId, DateOnly? date, PaginationParams pagination, CancellationToken cancellationToken);
+    Task<PagedList<ExchangeRateDto>> GetRatesByCurrencySourceAndTargetId(ExchangeRateQueryParams rateQueryParams, CancellationToken cancellationToken);
 }

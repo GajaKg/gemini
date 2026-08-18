@@ -19,7 +19,12 @@ public class ExchangeRatesController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<PagedList<ExchangeRateDto>>> GetRates([FromQuery] ExchangeRateQueryParams rateQueryParams, CancellationToken cancellationToken)
     {
-        var rates = await _exchangeRateService.GetRatesByCurrencySourceAndTargetId(rateQueryParams.Id, rateQueryParams.TargetCurrencyId, rateQueryParams.Date, rateQueryParams, cancellationToken);
+        var rates = await _exchangeRateService.GetRatesByCurrencySourceAndTargetId(rateQueryParams, cancellationToken);
+
+        if (rates is null)
+        {
+            return BadRequest();
+        }
 
         return Ok(rates);
     }
