@@ -1,4 +1,3 @@
-using Scrap.Domain.Models;
 using ScrapAPI.Dto;
 using ScrapAPI.Mappers;
 using ScrapAPI.Repositories;
@@ -14,51 +13,12 @@ public class CurrencyService : ICurrencyService
         _currencyRepository = currencyRepository;
     }
 
-    public async Task<IEnumerable<CurrencyDto>> GetAllAsync(CancellationToken cancellationToken)
+    public async Task<IEnumerable<CurrencyWithoutRatesDto>> GetAllAsync(CancellationToken cancellationToken)
     {
         var currencies = await _currencyRepository.GetAllAsync(cancellationToken);
         return currencies
-            .Select(c => MapToDto(c))
+            .Select(c => c.ToCurrencyWithoutRatesDto())
             .ToList();
     }
 
-    public async Task<CurrencyDto?> GetByIdAsync(int id, CancellationToken cancellationToken)
-    {
-        var currency = await _currencyRepository.GetByIdAsync(id, cancellationToken);
-
-        if (currency is null) return null;
-
-        return MapToDto(currency);
-    }
-
-    public async Task<CurrencyDto?> GetByIdAndRateCurrencyIdAsync(int id, int rateCurrencyId, CancellationToken cancellationToken)
-    {
-        var currency = await _currencyRepository.GetByIdAndRateCurrencyIdAsync(id, rateCurrencyId, cancellationToken);
-
-        if (currency is null) return null;
-
-        return MapToDto(currency);
-    }
-
-    private static CurrencyDto MapToDto(Currency currency)
-    {
-        return new CurrencyDto
-        {
-            Id = currency.Id,
-            Code = currency.Code,
-            Name = currency.Name,
-
-            ExchangeRates = currency.ExchangeRates
-                .Select(er => new ExchangeRateDto
-                {
-                    Id = er.Id,
-                    Sell = er.Sell,
-                    Buy = er.Buy,
-                    Middle = er.Middle,
-                    Date = er.Date,
-                    Currency = er.TargetCurrency?.ToCurrencyWithoutRatesDto()
-                })
-                .ToList()
-        };
-    }
 }
