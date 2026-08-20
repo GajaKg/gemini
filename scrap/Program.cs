@@ -74,5 +74,5 @@ await db.Database.MigrateAsync();
 
 // running app
 var runner = scope.ServiceProvider.GetRequiredService<ScrapingRunner>();
-// await runner.RunScrapeLastDaysAsync();
-await runner.RunScrapeDateRangeAsync();
+// await runner.RunScrapeLastDaysAsync(7);
+await runner.RunScrapeDateRangeAsync(new DateOnly(2020, 1, 1), new DateOnly(2020, 1, 22), 10);

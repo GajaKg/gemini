@@ -1,28 +1,29 @@
 using gemini.Services;
+using gemini.Services.CurrencyProviders;
 using Microsoft.Extensions.Logging;
 
 namespace gemini.Application;
 
 public class ScrapingRunner
 {
-    private readonly IEnumerable<IExchangeRateScraper> _scrapers;
+    private readonly IEnumerable<IExchangeRateScraper<ICurrencyProvider>> _scrapers;
     private readonly ILogger<ScrapingRunner> _logger;
 
     public ScrapingRunner(
-        IEnumerable<IExchangeRateScraper> scrapers,
+        IEnumerable<IExchangeRateScraper<ICurrencyProvider>> scrapers,
         ILogger<ScrapingRunner> logger)
     {
         _scrapers = scrapers;
         _logger = logger;
     }
 
-    public async Task RunScrapeLastDaysAsync(CancellationToken cancellationToken = default)
+    public async Task RunScrapeLastDaysAsync(int lastDaysNumber, CancellationToken cancellationToken = default)
     {
         foreach (var scraper in _scrapers)
         {
             try
             {
-                await scraper.ScrapeLastDays(10, cancellationToken);
+                await scraper.ScrapeLastDays(lastDaysNumber, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -30,13 +31,13 @@ public class ScrapingRunner
             }
         }
     }
-    public async Task RunScrapeDateRangeAsync(CancellationToken cancellationToken = default)
+    public async Task RunScrapeDateRangeAsync(DateOnly from, DateOnly to, int bulkSaveNumber = 10, CancellationToken cancellationToken = default)
     {
         foreach (var scraper in _scrapers)
         {
             try
             {
-                await scraper.ScrapeDateRange(new DateOnly(2020, 1, 1), DateOnly.FromDateTime(DateTime.Today), 10, cancellationToken);
+                await scraper.ScrapeDateRange(from, to, bulkSaveNumber, cancellationToken);
             }
             catch (Exception ex)
             {
