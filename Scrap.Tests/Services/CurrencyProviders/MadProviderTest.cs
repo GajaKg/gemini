@@ -1,12 +1,11 @@
-using gemini.Interfaces;
-using gemini.Models;
 using gemini.Services.CurrencyParser;
 using gemini.Services.CurrencyProviders;
 using gemini.Services.HtmlProviders;
 using HtmlAgilityPack;
-using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using OpenQA.Selenium;
+using Scrap.Domain.Enums;
+using Scrap.Domain.Models;
 
 namespace Scrap.Tests.CurrencyProviders;
 
@@ -48,8 +47,9 @@ public class MadProviderTests
             .ReturnsAsync(document);
 
         parserService
-            .Setup(x => x.Parse(document))
-            .Returns(expectedRates);
+            .Setup(x => x.Parse(document, CancellationToken.None))
+            .ReturnsAsync(expectedRates);
+            
 
         var provider = new MadProvider(
             seleniumProvider.Object,
@@ -99,7 +99,7 @@ public class MadProviderTests
         );
 
         parserService.Verify(
-            x => x.Parse(document),
+            x => x.Parse(document, CancellationToken.None),
             Times.Once
         );
     }
@@ -133,7 +133,7 @@ public class MadProviderTests
         Assert.Null(result);
 
         parserService.Verify(
-            x => x.Parse(It.IsAny<HtmlDocument>()),
+            x => x.Parse(It.IsAny<HtmlDocument>(), CancellationToken.None),
             Times.Never
         );
     }
@@ -166,8 +166,8 @@ public class MadProviderTests
             .ReturnsAsync(document);
 
         parserService
-            .Setup(x => x.Parse(document))
-            .Returns(expectedRates);
+            .Setup(x => x.Parse(document, CancellationToken.None))
+            .ReturnsAsync(expectedRates);
 
         var provider = new MadProvider(
             seleniumProvider.Object,

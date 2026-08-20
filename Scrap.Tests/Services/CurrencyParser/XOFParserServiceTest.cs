@@ -1,19 +1,26 @@
 
-using gemini.Interfaces;
 using gemini.Services.CurrencyParser;
 using HtmlAgilityPack;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Scrap.Domain.Enums;
 
 namespace Scrap.Tests.CurrencyParser
 {
     public class XOFParserServiceTest
     {
         [Fact]
-        public void Parse_WhenHtmlContainsValidRates_ReturnsEuroAndUsdRates()
+        public async Task Parse_WhenHtmlContainsValidRates_ReturnsEuroAndUsdRates()
         {
-            var parserService = new XOFParserService(NullLogger<XOFParserService>.Instance);
+            var emailService = new Mock<gemini.Services.Email.IEmailService>();
+            var configuration = new Mock<IConfiguration>();
+            var parserService = new XOFParserService(
+                NullLogger<XOFParserService>.Instance,
+                emailService.Object,
+                configuration.Object
+            );
+
             var html = """
                 <table>
                     <tbody>
@@ -27,7 +34,7 @@ namespace Scrap.Tests.CurrencyParser
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
 
-            var result = parserService.Parse(doc);
+            var result = await parserService.Parse(doc, CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Equal(2, result.Count);
@@ -36,10 +43,17 @@ namespace Scrap.Tests.CurrencyParser
         }
 
         [Fact]
-        public void Parse_WhenHtmlContainsInvalidRates_ReturnsNull()
+        public async Task Parse_WhenHtmlContainsInvalidRates_ReturnsNull()
         {
             // Arrange
-            var parserService = new XOFParserService(NullLogger<XOFParserService>.Instance);
+            var emailService = new Mock<gemini.Services.Email.IEmailService>();
+            var configuration = new Mock<IConfiguration>();
+            var parserService = new XOFParserService(
+                NullLogger<XOFParserService>.Instance,
+                emailService.Object,
+                configuration.Object
+            );
+
             var html = """
                 <h1>No rates</h1>
                 """;
@@ -47,7 +61,7 @@ namespace Scrap.Tests.CurrencyParser
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
 
-            var result = parserService.Parse(doc);
+            var result = await parserService.Parse(doc, CancellationToken.None);
 
             Assert.Null(result);
         }
