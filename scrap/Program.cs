@@ -40,15 +40,20 @@ builder.Services.AddScoped<ScrapingRunner>();
 */
 builder.Services.AddScoped<IMadParserService, MADParserService>();
 builder.Services.AddScoped<IMadCurrencyProvider, MadProvider>();
-builder.Services.AddScoped<IExchangeRateScraper, ExchangeRateScraper<IMadCurrencyProvider>>();
+builder.Services.AddScoped<
+    IExchangeRateScraper<IMadCurrencyProvider>,
+    ExchangeRateScraper<IMadCurrencyProvider>
+>();
 
 /** 
 * register XOF
 */
 builder.Services.AddScoped<IXofParserService, XOFParserService>();
 builder.Services.AddScoped<IXofCurrencyProvider, XofProvider>();
-builder.Services.AddScoped<IExchangeRateScraper, ExchangeRateScraper<IXofCurrencyProvider>>();
-
+builder.Services.AddScoped<
+    IExchangeRateScraper<IXofCurrencyProvider>,
+    ExchangeRateScraper<IXofCurrencyProvider>
+>();
 
 // Database
 builder.Services.AddDbContext<ApplicationDBContext>(options =>

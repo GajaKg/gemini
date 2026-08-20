@@ -9,7 +9,7 @@ using Scrap.Domain.Enums;
 
 namespace gemini.Services;
 
-public class ExchangeRateScraper<TProvider> : IExchangeRateScraper
+public class ExchangeRateScraper<TProvider> : IExchangeRateScraper<TProvider>
     where TProvider : ICurrencyProvider
 {
     private readonly TProvider _currencyProvider;
