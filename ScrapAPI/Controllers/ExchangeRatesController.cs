@@ -25,7 +25,7 @@ public class ExchangeRatesController : ControllerBase
         {
             return BadRequest();
         }
-
+        
         return Ok(rates);
     }
 }

@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using ScrapAPI.Data;
-using ScrapAPI.Infrastructure.RetryPolicies;
 using ScrapAPI.Middleware;
 using ScrapAPI.Repositories;
 using ScrapAPI.Services;
@@ -33,23 +32,6 @@ builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();
 builder.Services.AddScoped<ICurrencyRepository, CurrencyRepository>();
 builder.Services.AddScoped<IExchangeRateRepository, ExchangeRateRepository>();
 
-builder.Services
-    .AddHttpClient<IExchangeRateService, ExchangeRateService>()
-    .SetHandlerLifetime(TimeSpan.FromMinutes(5))
-    .AddPolicyHandler((sp, _) =>
-    {
-        var logger = sp.GetRequiredService<ILogger<RetryPolicies>>();
-        return RetryPolicies.GetRetryPolicy(logger);
-    });
-
-builder.Services
-    .AddHttpClient<ICurrencyService, CurrencyService>()
-    .SetHandlerLifetime(TimeSpan.FromMinutes(5))
-    .AddPolicyHandler((sp, _) =>
-    {
-        var logger = sp.GetRequiredService<ILogger<RetryPolicies>>();
-        return RetryPolicies.GetRetryPolicy(logger);
-    });
 
 // Controllers
 builder.Services.AddControllers();
