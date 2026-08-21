@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using ScrapAPI.Data;
+using ScrapAPI.Infrastructure.RetryPolicies;
 using ScrapAPI.Middleware;
 using ScrapAPI.Repositories;
 using ScrapAPI.Services;
@@ -32,6 +33,23 @@ builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();
 builder.Services.AddScoped<ICurrencyRepository, CurrencyRepository>();
 builder.Services.AddScoped<IExchangeRateRepository, ExchangeRateRepository>();
 
+builder.Services
+    .AddHttpClient<IExchangeRateService, ExchangeRateService>()
+    .SetHandlerLifetime(TimeSpan.FromMinutes(5))
+    .AddPolicyHandler((sp, _) =>
+    {
+        var logger = sp.GetRequiredService<ILogger<RetryPolicies>>();
+        return RetryPolicies.GetRetryPolicy(logger);
+    });
+
+builder.Services
+    .AddHttpClient<ICurrencyService, CurrencyService>()
+    .SetHandlerLifetime(TimeSpan.FromMinutes(5))
+    .AddPolicyHandler((sp, _) =>
+    {
+        var logger = sp.GetRequiredService<ILogger<RetryPolicies>>();
+        return RetryPolicies.GetRetryPolicy(logger);
+    });
 
 // Controllers
 builder.Services.AddControllers();
@@ -54,7 +72,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 // rate limiter
-// The approach I just showed you has a problem - the rate limit policy is global and applies to all users. 
+// the rate limit policy is global and applies to all users. 
 // All users share 10 request, if first user has 10 request others will be blocked. With rateLimitPartition every user has 10 request!
 // Most of the time, you don't want to do this. Rate limiting should be granular and apply to individual users.
 // Luckily, you can achieve this by creating a RateLimitPartition.
