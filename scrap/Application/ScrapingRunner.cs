@@ -6,11 +6,11 @@ namespace gemini.Application;
 
 public class ScrapingRunner
 {
-    private readonly IEnumerable<IExchangeRateScraper<ICurrencyProvider>> _scrapers;
+    private readonly IEnumerable<IExchangeRateScraper> _scrapers;
     private readonly ILogger<ScrapingRunner> _logger;
 
     public ScrapingRunner(
-        IEnumerable<IExchangeRateScraper<ICurrencyProvider>> scrapers,
+        IEnumerable<IExchangeRateScraper> scrapers,
         ILogger<ScrapingRunner> logger)
     {
         _scrapers = scrapers;
