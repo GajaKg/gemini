@@ -4,7 +4,7 @@ using ScrappyCoco;
 using ScrappyCoco.Services.Currencies;
 using ScrappyCoco.Services.ExchangeRates;
 using MudBlazor.Services;
-using ScrapAPI.Infrastructure.RetryPolicies;
+using ScrappyCoco.Infrastructure.RetryPolicies;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
