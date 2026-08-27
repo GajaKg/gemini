@@ -4,6 +4,7 @@ using gemini.Services;
 using gemini.Services.CurrencyProviders;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Scrap.Domain.Entities;
 using Scrap.Domain.Enums;
 using Scrap.Domain.Models;
 

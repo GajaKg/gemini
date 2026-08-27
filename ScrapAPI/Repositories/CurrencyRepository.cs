@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Scrap.Domain.Models;
+using Scrap.Domain.Entities;
 using ScrapAPI.Data;
 
 namespace ScrapAPI.Repositories;

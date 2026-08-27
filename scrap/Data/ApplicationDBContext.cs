@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Scrap.Domain.Interfaces;
-using Scrap.Domain.Models;
+using Scrap.Domain.Entities;
 
 namespace gemini.Data
 {
@@ -9,21 +9,30 @@ namespace gemini.Data
         public ApplicationDBContext(
             DbContextOptions<ApplicationDBContext> options
         ) : base(options)
-        {
-
-        }
+        { }
 
         public DbSet<ExchangeRate> ExchangeRates { get; set; }
         public DbSet<Currency> Currencies { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            ModelExchangeRate(modelBuilder);
+
+            ModelCurrency(modelBuilder);
+
+            AddDefaultData(modelBuilder);
+
+            base.OnModelCreating(modelBuilder);
+        }
+
+        private static void ModelExchangeRate(ModelBuilder modelBuilder)
+        {
             modelBuilder.Entity<ExchangeRate>()
-                .HasOne(e => e.Currency)
-                .WithMany(c => c.ExchangeRates)
-                .HasForeignKey(e => e.CurrencyId)
-                .OnDelete(DeleteBehavior.Restrict);
-            
+               .HasOne(e => e.Currency)
+               .WithMany(c => c.ExchangeRates)
+               .HasForeignKey(e => e.CurrencyId)
+               .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<ExchangeRate>()
                 .HasOne(e => e.TargetCurrency)
                 .WithMany(c => c.TargetExchangeRates)
@@ -38,7 +47,10 @@ namespace gemini.Data
                     e.Date,
                 })
                 .IsUnique();
+        }
 
+        private static void ModelCurrency(ModelBuilder modelBuilder)
+        {
             modelBuilder.Entity<Currency>()
                 .HasIndex(c => new
                 {
@@ -49,7 +61,10 @@ namespace gemini.Data
             modelBuilder.Entity<Currency>()
                 .Property(c => c.Code)
                 .HasConversion<string>();
+        }
 
+        private static void AddDefaultData(ModelBuilder modelBuilder)
+        {
             modelBuilder.Entity<Currency>().HasData(
                 new Currency
                 {
@@ -76,8 +91,6 @@ namespace gemini.Data
                     Name = CurrencyNames.USDFullName
                 }
             );
-
-            base.OnModelCreating(modelBuilder);
         }
     }
 }

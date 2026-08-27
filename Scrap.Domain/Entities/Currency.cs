@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Scrap.Domain.Enums;
 
-namespace Scrap.Domain.Models;
+namespace Scrap.Domain.Entities;
 
 public class Currency
 {

@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Moq.Protected;
 
-namespace Scrap.Tests.HtmlProviders
+namespace Scrap.Tests.Services.HtmlProviders
 {
     public class HttpClientProviderTest
     {

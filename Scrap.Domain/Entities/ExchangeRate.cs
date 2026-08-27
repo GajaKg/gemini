@@ -1,6 +1,4 @@
-using Scrap.Domain.Enums;
-
-namespace Scrap.Domain.Models;
+namespace Scrap.Domain.Entities;
 
 public class ExchangeRate
 {
@@ -14,18 +12,5 @@ public class ExchangeRate
     public decimal Buy { get; set; }
     public decimal Middle { get; set; }
     public DateOnly Date { set; get; }
-
-
-    public string DetailInfo()
-    {
-        return $"Buy={Buy}, Sell={Sell}, Middle={Middle}";
-    }
 }
 
-public class ExchangeRateRaw
-{
-    public decimal Sell { get; set; }
-    public decimal Buy { get; set; }
-    public decimal Middle { get; set; }
-    public CurrencyCode TargetCurrency { get; set; }
-}

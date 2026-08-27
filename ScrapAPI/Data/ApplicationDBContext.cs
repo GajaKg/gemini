@@ -1,7 +1,7 @@
 
 
 using Microsoft.EntityFrameworkCore;
-using Scrap.Domain.Models;
+using Scrap.Domain.Entities;
 
 namespace ScrapAPI.Data;
 
@@ -19,11 +19,20 @@ public class ApplicationDBContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        ModelExchangeRate(modelBuilder);
+
+        ModelCurrency(modelBuilder);
+
+        base.OnModelCreating(modelBuilder);
+    }
+
+    private static void ModelExchangeRate(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<ExchangeRate>()
-            .HasOne(er => er.Currency)
-            .WithMany(c => c.ExchangeRates)
-            .HasForeignKey(er => er.CurrencyId)
-            .OnDelete(DeleteBehavior.Restrict);
+              .HasOne(er => er.Currency)
+              .WithMany(c => c.ExchangeRates)
+              .HasForeignKey(er => er.CurrencyId)
+              .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<ExchangeRate>()
             .HasOne(er => er.TargetCurrency)
@@ -39,7 +48,10 @@ public class ApplicationDBContext : DbContext
                 e.Date
             })
             .IsUnique();
+    }
 
+    private static void ModelCurrency(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<Currency>()
             .Property(c => c.Code)
             .HasConversion<string>();
@@ -50,8 +62,5 @@ public class ApplicationDBContext : DbContext
                 c.Code,
             })
             .IsUnique();
-
-        base.OnModelCreating(modelBuilder);
     }
-
 }

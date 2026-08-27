@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Scrap.Domain.Models;
+using Scrap.Domain.Entities;
 using ScrapAPI.Data;
 using ScrapAPI.Helpers;
 
@@ -16,7 +16,7 @@ public class ExchangeRateRepository : IExchangeRateRepository
 
     public async Task<PagedList<ExchangeRate>> GetRatesByCurrencySourceAndTargetId(ExchangeRateQueryParams rateQueryParams, CancellationToken cancellationToken)
     {
-        var sourceQuery = _context.ExchangeRates
+        IQueryable<ExchangeRate> sourceQuery = _context.ExchangeRates
             .AsNoTracking()
             .Where(er => er.CurrencyId == rateQueryParams.Id && er.TargetCurrencyId == rateQueryParams.TargetCurrencyId);
 

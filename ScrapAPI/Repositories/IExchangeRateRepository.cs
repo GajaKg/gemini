@@ -1,5 +1,5 @@
 
-using Scrap.Domain.Models;
+using Scrap.Domain.Entities;
 using ScrapAPI.Helpers;
 
 namespace ScrapAPI.Repositories;

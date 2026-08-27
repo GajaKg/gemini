@@ -1,4 +1,3 @@
-
 using gemini.Dtos;
 using Scrap.Domain.Models;
 using gemini.Repositories;
@@ -6,6 +5,7 @@ using gemini.Services.CurrencyProviders;
 using Microsoft.Extensions.Logging;
 using Scrap.Domain.Interfaces;
 using Scrap.Domain.Enums;
+using Scrap.Domain.Entities;
 
 namespace gemini.Services;
 
@@ -86,7 +86,7 @@ public class ExchangeRateScraper<TProvider> : IExchangeRateScraper
 
         List<ExchangeRate> bulkValues = [];
 
-        for (var date = start; date <= end; date = date.AddDays(1))
+        for (var date = end; date >= start; date = date.AddDays(-1))
         {
             try
             {
@@ -228,10 +228,9 @@ public class ExchangeRateScraper<TProvider> : IExchangeRateScraper
 
             bulkValues.Add(exchangeRateParsed);
 
-            _logger.LogInformation("✅🗂  Got rates({TargetCurrency} to {Currency}): {ExchangeRateParsed} on date {Date}, adding for bulk save.",
+            _logger.LogInformation("✅🗂  Got rates({TargetCurrency} to {Currency}): Date {Date}, adding for bulk save.",
                 targetCurrency.Code,
                 currency.Code,
-                exchangeRateParsed.DetailInfo(),
                 date
             );
         }
