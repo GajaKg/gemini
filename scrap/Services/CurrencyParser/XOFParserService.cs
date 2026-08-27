@@ -26,7 +26,7 @@ namespace gemini.Services.CurrencyParser
         /// <summary>
         /// Extract data from html
         /// </summary>
-        public async Task<List<ExchangeRateRaw>?> Parse(HtmlDocument doc, CancellationToken cancellationToken)
+        public List<ExchangeRateRaw>? Parse(HtmlDocument doc, CancellationToken cancellationToken)
         {
             // <tr><td>EUR</td><td>655,957</td><td>655,957</td></tr>
             var rows = doc.DocumentNode.SelectNodes("//table/tbody/tr");
@@ -38,7 +38,7 @@ namespace gemini.Services.CurrencyParser
                 var errorReciever = _configuration["Email:ErrorReciever"];
 
                 if (errorReciever is null) return null;
-                await _email.ComposeMessage(errorReciever, "XOF scraper critical error", "Please check page for html changes!", cancellationToken);
+                _email.ComposeMessage(errorReciever, "XOF scraper critical error", "Please check page for html changes!", cancellationToken);
 
                 return null;
             }

@@ -70,7 +70,7 @@ public class MADParserService : IMadParserService
     /// <summary>
     /// Extract data from html
     /// </summary>
-    public async Task<List<ExchangeRateRaw>?> Parse(HtmlDocument doc, CancellationToken cancellationToken)
+    public List<ExchangeRateRaw>? Parse(HtmlDocument doc, CancellationToken cancellationToken)
     {
         // <tr>
         //     <td><span class="object_name">1 EURO</span><br /></td>
@@ -86,7 +86,7 @@ public class MADParserService : IMadParserService
             var errorReciever = _configuration["Email:ErrorReciever"];
 
             if (errorReciever is null) return null;
-            await _email.ComposeMessage(errorReciever, "MAD scraper critical error", "Please check page for html changes!", cancellationToken);
+            _email.ComposeMessage(errorReciever, "MAD scraper critical error", "Please check page for html changes!", cancellationToken);
 
             return null;
         }

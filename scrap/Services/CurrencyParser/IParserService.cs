@@ -5,7 +5,7 @@ namespace gemini.Services.CurrencyParser;
 
 public interface IParserService
 {
-    public Task<List<ExchangeRateRaw>?> Parse(HtmlDocument doc, CancellationToken cancellationToken);
+    public List<ExchangeRateRaw>? Parse(HtmlDocument doc, CancellationToken cancellationToken);
 }
 
 public interface IXofParserService : IParserService;

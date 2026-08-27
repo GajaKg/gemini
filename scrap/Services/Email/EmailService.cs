@@ -21,7 +21,7 @@ public class EmailService : IEmailService
         _fromPassword = _configuration["Email:Password"];
     }
 
-    public async Task ComposeMessage(string to, string subject, string body, CancellationToken cancellationToken = default)
+    public void ComposeMessage(string to, string subject, string body, CancellationToken cancellationToken = default)
     {
         if (_fromUsername is null || _fromPassword is null)
         {
@@ -39,10 +39,10 @@ public class EmailService : IEmailService
             Text = @body
         };
 
-        await ConnectAndSend(message, cancellationToken);
+        ConnectAndSend(message, cancellationToken);
     }
 
-    private async Task ConnectAndSend(MimeMessage message, CancellationToken cancellationToken)
+    private void ConnectAndSend(MimeMessage message, CancellationToken cancellationToken)
     {
         using var client = new SmtpClient();
 
@@ -51,15 +51,15 @@ public class EmailService : IEmailService
 
         try
         {
-            await client.ConnectAsync(
+            client.ConnectAsync(
                 "smtp.gmail.com",
                 587,
                 MailKit.Security.SecureSocketOptions.StartTls,
                 cancellationToken
             );
-            await client.AuthenticateAsync(_fromUsername!, _fromPassword!, cancellationToken);
-            await client.SendAsync(message, cancellationToken);
-            await client.DisconnectAsync(true, cancellationToken);
+            client.AuthenticateAsync(_fromUsername!, _fromPassword!, cancellationToken);
+            client.SendAsync(message, cancellationToken);
+            client.DisconnectAsync(true, cancellationToken);
         }
         catch (System.Exception ex)
         {
